@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import status from '../data/status.json';
 import { getGifPools } from '../lib/gifs';
 import { formatPrague } from '../lib/format';
-import { GIF_SLOTS, OFFICIAL_NEWS_URL } from '../config';
+import { GIF_SLOTS } from '../config';
 
 const pools = await getGifPools();
 const stav = status.tece ? 'ano' : 'ne';
@@ -39,10 +39,6 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
   </main>
 
   <footer class="foot">
-    <p>
-      Neoficiální stránka, stav ručně nastavuje správce. Oficiální zprávy najdete
-      v&nbsp;<a href={OFFICIAL_NEWS_URL} rel="noopener">aktualitách obce</a>.
-    </p>
     <p class="giphy">Powered by <a href="https://giphy.com" rel="noopener">GIPHY</a></p>
   </footer>
 

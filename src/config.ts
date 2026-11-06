@@ -5,5 +5,3 @@ export const STATUS_PATH = 'src/data/status.json';
 
 /** Kolik GIFů se ukazuje kolem odpovědi. */
 export const GIF_SLOTS = 12;
-
-export const OFFICIAL_NEWS_URL = 'https://www.hradesin.cz/obecni-urad/aktuality/';
