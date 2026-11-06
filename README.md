@@ -49,7 +49,7 @@ Základ je ručně vybraný balík skutečných záběrů v `src/data/gifs.json`
 
 Při NE jsou teď jen smutná zvířátka. Poměr hromádek je `NE_MIX` v `src/config.ts`:
 naštvaná a sucho jsou připravené, stačí jim dát nenulový podíl
-(třeba 0.2 / 0.7 / 0.1 dá na 16 fotkách 2–4 smutná, 10–12 naštvaných a 1–2 suché).
+(třeba 0.2 / 0.7 / 0.1 dá na 10 fotkách zhruba 2 smutná, 7 naštvaných a 1 suché).
 V prohlížeči se hrají jako animovaný WebP v `<img>` – funguje na každém telefonu,
 i v úsporném režimu, kde video samo nehraje. Každá návštěva
 dostane náhodný výběr, dlaždice se samy prolínají a klik na dlaždici ukáže nový GIF.
@@ -65,8 +65,11 @@ při každé změně stavu a jednou denně.
 ## Vzhled
 
 Úřední deska: uprostřed připíchnutý list s otázkou a razítkem ANO/NE, kolem nahodile
-připíchnuté fotky (GIFy). Při ANO je nástěnka „zatopená“ modrou, při NE vyschlý korek.
-Klik na fotku ji přepíchne s jiným zvířetem, klik na razítko bouchne znovu. Animace jde
+připíchnuté fotky (GIFy, `GIF_SLOTS` = 10). Vpravo vede trubka s mosazným kohoutkem
+a kýblem (kreslené SVG + CSS): při NE z něj jen kape, při ANO teče proudem.
+Při ANO je nástěnka „zatopená“ modrou, při NE vyschlý korek.
+Klik na fotku ji přepíchne s jiným zvířetem, klik na razítko bouchne znovu, klik na
+kohoutek s ním zacloumá (při NE hned odkápne kapka). Animace jde
 zastavit tlačítkem vpravo dole (volba se pamatuje, `prefers-reduced-motion` se respektuje).
 
 Písma z Google Fonts (OFL), uložená v `public/fonts/` a ořezaná na latinku s češtinou:

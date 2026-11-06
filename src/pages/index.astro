@@ -63,6 +63,105 @@ const data = JSON.stringify({
       </p>
     </section>
 
+    <!-- Kohoutek na trubce: při NE z něj jen kape, při ANO teče. Kreslený, ne GIF. -->
+    <button type="button" class="kohoutek" id="kohoutek" aria-label="Otočit kohoutkem">
+      <span class="trubka" aria-hidden="true"></span>
+      <svg class="ventil" viewBox="20 0 76 71" aria-hidden="true">
+        <defs>
+          <linearGradient id="g-zinek" x1="0" x2="1">
+            <stop offset="0" stop-color="#5f676c" />
+            <stop offset=".3" stop-color="#dfe5e8" />
+            <stop offset=".55" stop-color="#aab3b8" />
+            <stop offset="1" stop-color="#545b60" />
+          </linearGradient>
+          <linearGradient id="g-zinek-h" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#5f676c" />
+            <stop offset=".3" stop-color="#dfe5e8" />
+            <stop offset=".55" stop-color="#aab3b8" />
+            <stop offset="1" stop-color="#545b60" />
+          </linearGradient>
+          <linearGradient id="g-mosaz" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#8d5c14" />
+            <stop offset=".28" stop-color="#f8dc8c" />
+            <stop offset=".55" stop-color="#d29e38" />
+            <stop offset="1" stop-color="#6e430c" />
+          </linearGradient>
+          <linearGradient id="g-mosaz-v" x1="0" x2="1">
+            <stop offset="0" stop-color="#7a4d10" />
+            <stop offset=".3" stop-color="#f8dc8c" />
+            <stop offset=".6" stop-color="#d29e38" />
+            <stop offset="1" stop-color="#6e430c" />
+          </linearGradient>
+          <linearGradient id="g-kolo" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ff7a63" />
+            <stop offset=".45" stop-color="#d8261a" />
+            <stop offset="1" stop-color="#7d0f08" />
+          </linearGradient>
+        </defs>
+        <!-- trubka ze zdi a koleno -->
+        <rect x="80" y="0" width="12" height="34" fill="url(#g-zinek)" />
+        <rect x="78" y="22" width="16" height="7" rx="1" fill="url(#g-zinek)" />
+        <path d="M78 33h16v13a8 8 0 0 1-8 8H74V38h4z" fill="url(#g-zinek-h)" />
+        <path d="M79 34h14" stroke="#3f4549" stroke-width="1" opacity=".5" />
+        <!-- matice -->
+        <rect x="66" y="36" width="9" height="20" rx="1.2" fill="url(#g-mosaz)" />
+        <path d="M69 36.5v19M72 36.5v19" stroke="#6e430c" stroke-width=".7" opacity=".55" />
+        <!-- tělo, vršek, vřeteno -->
+        <rect x="46" y="39" width="21" height="13" fill="url(#g-mosaz)" />
+        <path d="M49 39l2-10h12l2 10z" fill="url(#g-mosaz-v)" />
+        <rect x="50" y="26.5" width="14" height="3.5" rx=".8" fill="url(#g-mosaz)" />
+        <rect x="55.5" y="16" width="3" height="11" fill="url(#g-mosaz-v)" />
+        <!-- kolečko -->
+        <g class="kolo">
+          <rect x="43" y="10" width="28" height="7" rx="3.5" fill="url(#g-kolo)" />
+          <path d="M47 10.6v5.8M51 10.4v6.2M55 10.3v6.4M59 10.3v6.4M63 10.4v6.2M67 10.6v5.8" stroke="#7d0f08" stroke-width=".8" opacity=".5" />
+          <rect x="54" y="7" width="6" height="3.4" rx="1" fill="url(#g-mosaz)" />
+        </g>
+        <!-- výtok -->
+        <path d="M48 39h-2a10 10 0 0 0-10 10v15h12V54a2 2 0 0 1 2-2h-2z" fill="url(#g-mosaz-v)" />
+        <rect x="34.5" y="63" width="15" height="7" rx="1.5" fill="url(#g-mosaz-v)" />
+        <path d="M35 66.5h14" stroke="#6e430c" stroke-width=".7" opacity=".5" />
+      </svg>
+      <span class="spad" aria-hidden="true">
+        <svg class="kapka" viewBox="0 0 20 27"><path d="M10 0C10 0 0 11.5 0 17a10 10 0 0 0 20 0C20 11.5 10 0 10 0Z" /><ellipse cx="6.2" cy="17.5" rx="2.2" ry="3.6" fill="#fff" opacity=".7" /></svg>
+        <span class="proud"></span>
+      </span>
+      <svg class="kbelik" viewBox="0 0 100 76" aria-hidden="true">
+        <defs>
+          <linearGradient id="g-kbelik" x1="0" x2="1">
+            <stop offset="0" stop-color="#6b7378" />
+            <stop offset=".22" stop-color="#e3e8ea" />
+            <stop offset=".5" stop-color="#b3bbbf" />
+            <stop offset=".8" stop-color="#8c9499" />
+            <stop offset="1" stop-color="#596065" />
+          </linearGradient>
+          <linearGradient id="g-uvnitr" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#2d3236" />
+            <stop offset="1" stop-color="#596166" />
+          </linearGradient>
+        </defs>
+        <!-- ucho sklopené dozadu -->
+        <path d="M11 25Q50 2 89 25" fill="none" stroke="#5a6267" stroke-width="2" />
+        <!-- otvor: prázdný (NE), nebo plný vody (ANO) -->
+        <ellipse cx="50" cy="24" rx="40" ry="8" fill="url(#g-uvnitr)" />
+        <g class="hladina">
+          <ellipse cx="50" cy="26" rx="37.5" ry="6.4" />
+          <ellipse class="vlnka" cx="34" cy="26.5" rx="7" ry="1.6" />
+          <ellipse class="vlnka v2" cx="34" cy="26.5" rx="7" ry="1.6" />
+        </g>
+        <ellipse class="plink" cx="34" cy="26" rx="6" ry="1.5" />
+        <!-- plášť s prolisy -->
+        <path d="M10 24L19.5 69.5Q50 78 80.5 69.5L90 24Q50 40 10 24Z" fill="url(#g-kbelik)" />
+        <path d="M12.6 36.5Q50 52 87.4 36.5" fill="none" stroke="#f2f5f6" stroke-width="1.2" opacity=".7" />
+        <path d="M12.8 38Q50 53.5 87.2 38" fill="none" stroke="#4d5458" stroke-width="1" opacity=".45" />
+        <path d="M16.4 54.5Q50 68 83.6 54.5" fill="none" stroke="#f2f5f6" stroke-width="1.2" opacity=".7" />
+        <path d="M16.6 56Q50 69.5 83.4 56" fill="none" stroke="#4d5458" stroke-width="1" opacity=".45" />
+        <ellipse cx="50" cy="24" rx="40" ry="8" fill="none" stroke="#d3d9dc" stroke-width="2.6" />
+        <circle cx="11.4" cy="26" r="2" fill="#7a8287" />
+        <circle cx="88.6" cy="26" r="2" fill="#7a8287" />
+      </svg>
+    </button>
+
     {
       slots.map((n) => (
         <button type="button" class={`photo p${n}`} aria-label="Ukázat jiné zvíře">
@@ -358,6 +457,8 @@ const data = JSON.stringify({
     motionBtn.setAttribute('aria-label', label);
     motionBtn.title = label;
     motionText.textContent = label;
+    // Kohoutek je čisté CSS: zastavené animace = kapka visí na výtoku.
+    document.documentElement.dataset.pohyb = paused ? 'stop' : 'go';
     // Obrázek nejde pozastavit – vymění se za statický první snímek a zpět.
     for (const img of document.querySelectorAll<HTMLImageElement>('.frame img')) {
       const id = img.dataset.id;
@@ -375,6 +476,33 @@ const data = JSON.stringify({
     applyMotion();
   });
   applyMotion();
+
+  /* ---------- Kohoutek ---------- */
+
+  // Otočit se dá, voda tím ale nepoteče: kohoutek se jen otřese a kapka hned odkápne.
+  const kohoutek = document.getElementById('kohoutek')!;
+  const KAPANI_MS = 3200; // stejné jako --kapani v CSS
+  kohoutek.addEventListener('click', () => {
+    if (paused || reduceMotion) return;
+    kohoutek.querySelector('.kolo')?.animate(
+      [{ translate: '0 0' }, { translate: '0 -3px' }, { translate: '0 -3px' }, { translate: '0 0' }],
+      { duration: 600, easing: 'ease-in-out' },
+    );
+    kohoutek.querySelector('.ventil')?.animate(
+      [{ rotate: '0deg' }, { rotate: '-3deg' }, { rotate: '2deg' }, { rotate: '-1deg' }, { rotate: '0deg' }],
+      { duration: 520, easing: 'ease-out' },
+    );
+    if (mood === 'ano') {
+      kohoutek.querySelector('.proud')?.animate([{ scale: '1 1' }, { scale: '1.7 1' }, { scale: '1 1' }], {
+        duration: 700,
+        easing: 'ease-in-out',
+      });
+      return;
+    }
+    for (const el of kohoutek.querySelectorAll('.kapka, .plink')) {
+      for (const a of el.getAnimations()) a.currentTime = KAPANI_MS * 0.5;
+    }
+  });
 
   /* ---------- Stav ---------- */
 
@@ -492,12 +620,13 @@ const data = JSON.stringify({
    * kolem nahodile připíchnuté fotky. Kostra je mřížka (nic se nepřekrývá
    * s odpovědí), náhodu dodává natočení, posun a velikost každé fotky.
    *
-   * Desktop (≥ 960 px), celé na jednu obrazovku:
-   *   [ 1][ 2][ 3][ 4][ 5][ 6]
-   *   [ 7][   list A4 na    ][ 8]
-   *   [ 9][     šířku       ][10]
-   *   [11][12][13][14][15][16]
-   * Mobil: 3 fotky, list přes celou šířku, pod ním 12 fotek.
+   * Desktop (≥ 960 px), celé na jednu obrazovku, vpravo trubka s kohoutkem:
+   *   [ 1][ 2][ 3][ 4]  ║
+   *   [ 5][ list A4   ] ╠╕
+   *   [ 6][ na šířku  ]  ·
+   *   [ 7][ 8][ 9][10]  ▽
+   * Mobil: 3 fotky, list přes celou šířku, pod ním 4 fotky s kohoutkem
+   * vpravo (trubka vede zpoza listu) a nakonec 3 fotky.
    */
   .board {
     width: min(1320px, 100%);
@@ -507,6 +636,8 @@ const data = JSON.stringify({
     display: grid;
     gap: 14px;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    /* Kohoutek zabere sloupec na dva řádky, fotky vedle něj zaplní mezeru. */
+    grid-auto-flow: row dense;
   }
 
   /* ---------- List papíru ---------- */
@@ -737,12 +868,352 @@ const data = JSON.stringify({
     outline-offset: 4px;
   }
 
-  .photo:nth-of-type(n + 4) {
+  /* Na telefonu jdou nad list jen první tři fotky, ostatní pod něj. */
+  .photo {
     order: 2;
   }
 
-  .p16 {
+  .p1,
+  .p2,
+  .p3 {
+    order: 0;
+  }
+
+  /* ---------- Kohoutek ---------- */
+
+  /*
+   * Mosazný výtokový ventil na pozinkované trubce, pod ním kýbl.
+   * NE: na výtoku roste kapka, odkápne a ve kýblu cinkne. ANO: teče proudem.
+   * Všechno se měří od šířky sloupce (kreslené SVG mají šířku 100 jednotek).
+   */
+  .kohoutek {
+    --kapani: 3.2s;
+    --x: 28.9%; /* střed výtoku (x = 42 ve viewBoxu 20–96), kam padá voda */
+    --voda: #3c9ee6;
+    --voda-svetla: #bfe6ff;
+    position: relative;
+    z-index: 2;
+    order: 2;
+    grid-column: 3;
+    grid-row: span 2;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    font: inherit;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    container-type: size;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :global(body[data-stav='ano']) .kohoutek {
+    --voda: #a9ddff;
+    --voda-svetla: #ffffff;
+  }
+
+  .kohoutek:focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 4px;
+  }
+
+  /* Trubka vede zpoza listu (telefon) nebo od horního okraje (desktop). */
+  .trubka {
+    flex: none;
+    width: 15.8%; /* trubka v SVG: x = 80–92 */
+    height: 54px;
+    margin: -54px 0 0 78.9%;
+    background: linear-gradient(90deg, #5f676c, #dfe5e8 30%, #aab3b8 55%, #545b60);
+    filter: drop-shadow(4px 6px 5px rgba(0, 0, 0, 0.3));
+  }
+
+  .ventil {
+    display: block;
+    flex: none;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    transform-origin: 86.8% 0;
+    filter: drop-shadow(4px 7px 5px rgba(0, 0, 0, 0.32));
+  }
+
+  .ventil .kolo {
+    transition: translate 0.6s ease;
+  }
+
+  /* Puštěno: vřeteno vyjede nahoru. */
+  :global(body[data-stav='ano']) .ventil .kolo {
+    translate: 0 -2px;
+  }
+
+  /* Prostor mezi výtokem a hladinou; kapka padá přes celou jeho výšku. */
+  .spad {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-height: 0;
+    container-type: size;
+  }
+
+  .kapka {
+    position: absolute;
+    top: -1px;
+    left: var(--x);
+    width: 11%;
+    margin-left: -5.5%;
+    overflow: visible;
+    transform-origin: 50% 0;
+    scale: 0.9;
+    animation: kapka var(--kapani) infinite;
+  }
+
+  .kapka path {
+    fill: var(--voda);
+  }
+
+  /*
+   * Odkápnutí je na začátku cyklu (0–13 %), zbytek času na výtoku roste
+   * další kapka. Bez animace (zastaveno, omezený pohyb) kapka jen visí.
+   */
+  @keyframes kapka {
+    0% {
+      translate: 0 0;
+      scale: 0.95 1.12;
+      animation-timing-function: cubic-bezier(0.5, 0, 1, 0.6);
+    }
+    13% {
+      translate: 0 calc(100cqh - 100%);
+      scale: 0.82 1.22;
+      opacity: 1;
+    }
+    13.1% {
+      translate: 0 calc(100cqh - 100%);
+      scale: 0.1;
+      opacity: 0;
+    }
+    14% {
+      translate: 0 0;
+      scale: 0.1;
+      opacity: 0;
+    }
+    18% {
+      opacity: 1;
+      animation-timing-function: ease-out;
+    }
+    82% {
+      scale: 0.88 0.82;
+    }
+    94% {
+      scale: 0.9 0.96;
+    }
+    100% {
+      translate: 0 0;
+      scale: 0.95 1.12;
+    }
+  }
+
+  /* Dvě drobné kapičky odskočí z hladiny. */
+  .spad::before,
+  .spad::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: var(--x);
+    width: 3.6%;
+    aspect-ratio: 1;
+    margin-left: -1.8%;
+    border-radius: 50%;
+    background: var(--voda-svetla);
+    opacity: 0;
+    animation: odskok var(--kapani) infinite;
+  }
+
+  .spad::after {
+    --smer: 1;
+  }
+
+  .spad::before {
+    --smer: -1;
+  }
+
+  @keyframes odskok {
+    0%,
+    12.9% {
+      opacity: 0;
+      translate: 0 0;
+      animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
+    }
+    13% {
+      opacity: 1;
+      translate: 0 0;
+    }
+    19% {
+      opacity: 1;
+      translate: calc(var(--smer) * 7cqw) -9cqw;
+      animation-timing-function: cubic-bezier(0.6, 0, 1, 0.6);
+    }
+    25% {
+      opacity: 0;
+      translate: calc(var(--smer) * 11cqw) 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .kbelik {
+    display: block;
+    flex: none;
+    /*
+     * Okraj kýblu (x = 10–90 ze 100) zabere 4–88 % sloupce, kapka padá do jeho
+     * levé části (x = 34). Hladina (y = 26 ze 76) sedí přesně na spodku .spad.
+     */
+    width: 105%;
+    height: auto;
+    margin: -27.3% 0 0 -6.5%;
+    overflow: visible;
+    filter: drop-shadow(4px 8px 6px rgba(0, 0, 0, 0.32));
+  }
+
+  .plink {
+    fill: none;
+    stroke: var(--voda-svetla);
+    stroke-width: 1.3;
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: plink var(--kapani) infinite;
+  }
+
+  @keyframes plink {
+    0%,
+    12.9% {
+      opacity: 0;
+      scale: 0.2;
+    }
+    13% {
+      opacity: 1;
+      scale: 0.25;
+      animation-timing-function: ease-out;
+    }
+    40% {
+      opacity: 0;
+      scale: 1.7;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .hladina,
+  .proud {
     display: none;
+  }
+
+  /* ---------- ANO: teče ---------- */
+
+  :global(body[data-stav='ano']) .kapka,
+  :global(body[data-stav='ano']) .plink {
+    display: none;
+  }
+
+  :global(body[data-stav='ano']) .hladina {
+    display: inline;
+  }
+
+  .hladina > ellipse:first-child {
+    fill: var(--voda);
+  }
+
+  .vlnka {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 0.8;
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: vlnka 1.4s ease-out infinite;
+  }
+
+  .vlnka.v2 {
+    animation-delay: -0.7s;
+  }
+
+  @keyframes vlnka {
+    0% {
+      opacity: 0.9;
+      scale: 0.3;
+    }
+    100% {
+      opacity: 0;
+      scale: 2.3;
+    }
+  }
+
+  :global(body[data-stav='ano']) .proud {
+    display: block;
+  }
+
+  /* Proud se cestou dolů zužuje, světlé pruhy v něm stékají. */
+  .proud {
+    position: absolute;
+    top: -2px;
+    bottom: 0;
+    left: var(--x);
+    width: 11%;
+    margin-left: -5.5%;
+    clip-path: polygon(0 0, 100% 0, 78% 100%, 22% 100%);
+    background:
+      linear-gradient(90deg, transparent 18%, rgba(255, 255, 255, 0.8) 34%, transparent 52%),
+      repeating-linear-gradient(180deg, transparent 0, rgba(255, 255, 255, 0.5) 9px, transparent 20px 46px),
+      var(--voda);
+    background-size: 100% 100%, 100% 46px, auto;
+    transform-origin: 50% 0;
+    animation: proud 0.4s linear infinite;
+  }
+
+  @keyframes proud {
+    to {
+      background-position: 0 0, 0 46px, 0 0;
+    }
+  }
+
+  :global(body[data-stav='ano']) .spad::before,
+  :global(body[data-stav='ano']) .spad::after {
+    animation-name: cak;
+    animation-duration: 0.7s;
+  }
+
+  :global(body[data-stav='ano']) .spad::after {
+    animation-delay: -0.35s;
+  }
+
+  @keyframes cak {
+    0% {
+      opacity: 1;
+      translate: 0 0;
+      animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
+    }
+    50% {
+      opacity: 1;
+      translate: calc(var(--smer) * 9cqw) -8cqw;
+      animation-timing-function: cubic-bezier(0.6, 0, 1, 0.6);
+    }
+    100% {
+      opacity: 0;
+      translate: calc(var(--smer) * 15cqw) 0;
+    }
+  }
+
+  /* Zastavené animace: kapka visí na výtoku, proud stojí. */
+  :global(html[data-pohyb='stop']) .kapka,
+  :global(html[data-pohyb='stop']) .plink,
+  :global(html[data-pohyb='stop']) .vlnka,
+  :global(html[data-pohyb='stop']) .proud,
+  :global(html[data-pohyb='stop']) .spad::before,
+  :global(html[data-pohyb='stop']) .spad::after {
+    animation: none;
   }
 
   /* Atribuce GIPHY na papírovém štítku – čitelná na modré i na korku. */
@@ -833,16 +1304,26 @@ const data = JSON.stringify({
     }
 
     .board {
-      /* 6 × 4 čtverce: šířka = 1,5 × dostupná výška → celé na jednu obrazovku. */
-      width: min(1320px, 100%, max(900px, 1.5 * (100dvh - 40px)));
+      /* 5 × 4 čtverce: šířka = 1,25 × dostupná výška → celé na jednu obrazovku. */
+      width: min(1320px, 100%, max(900px, 1.25 * (100dvh - 40px)));
       padding: 20px 20px 0;
       gap: 18px;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       grid-template-areas:
-        't1 t2 t3 t4 t5 t6'
-        't7 hero hero hero hero t8'
-        't9 hero hero hero hero t10'
-        't11 t12 t13 t14 t15 t16';
+        't1 t2 t3 t4 tap'
+        't5 hero hero hero tap'
+        't6 hero hero hero tap'
+        't7 t8 t9 t10 tap';
+    }
+
+    .kohoutek {
+      grid-area: tap;
+    }
+
+    /* Trubka od horního okraje stránky, ventil přesně u horní hrany listu. */
+    .trubka {
+      height: calc(100cqw + 38px);
+      margin-top: -20px;
     }
 
     /* List A4 na šířku, vystředěný v prostřední ploše. */
@@ -874,14 +1355,6 @@ const data = JSON.stringify({
       font-size: min(3.1cqw, 4.6cqh, 1.25rem);
     }
 
-    .photo:nth-of-type(n) {
-      order: 0;
-    }
-
-    .p16 {
-      display: block;
-    }
-
     .p1 { grid-area: t1; }
     .p2 { grid-area: t2; }
     .p3 { grid-area: t3; }
@@ -892,11 +1365,5 @@ const data = JSON.stringify({
     .p8 { grid-area: t8; }
     .p9 { grid-area: t9; }
     .p10 { grid-area: t10; }
-    .p11 { grid-area: t11; }
-    .p12 { grid-area: t12; }
-    .p13 { grid-area: t13; }
-    .p14 { grid-area: t14; }
-    .p15 { grid-area: t15; }
-    .p16 { grid-area: t16; }
   }
 </style>

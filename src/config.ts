@@ -3,8 +3,8 @@ export const REPO = 'hradesin/hradesin.github.io';
 export const BRANCH = 'main';
 export const STATUS_PATH = 'src/data/status.json';
 
-/** Kolik GIFů je vidět najednou (na desktopu rámují odpověď). */
-export const GIF_SLOTS = 16;
+/** Kolik GIFů je vidět najednou (na desktopu rámují odpověď zleva, shora a zdola, vpravo je kohoutek). */
+export const GIF_SLOTS = 10;
 
 /** Jedna fotka se sama vymění v náhodném intervalu (ms) – pravidelný rytmus působí strojově. */
 export const GIF_ROTATE_MS = [4000, 9000] as const;
@@ -12,7 +12,7 @@ export const GIF_ROTATE_MS = [4000, 9000] as const;
 /**
  * Při NE: podíl hromádek na nástěnce (0 = hromádka se nepoužije).
  * Teď jen smutná zvířátka; naštvaná a sucho jsou v gifs.json připravené,
- * např. { smutne: 0.2, nastvane: 0.7, sucho: 0.1 } dá na 16 fotkách 2–4 / 10–12 / 1–2.
+ * např. { smutne: 0.2, nastvane: 0.7, sucho: 0.1 } dá na 10 fotkách zhruba 2 / 7 / 1 (1–3 / 6–8 / 0–2).
  */
 export const NE_MIX: Record<'smutne' | 'nastvane' | 'sucho', number> = { smutne: 1, nastvane: 0, sucho: 0 };
 
