@@ -38,17 +38,23 @@ do repozitáře, proto token platí jen pro tento repozitář a jen rok.
 
 ## GIFy
 
-Základ je ručně vybraný balík skutečných zvířat a krajin v `src/data/gifs.json`
-(65 koupajících se pro ANO; pro NE 54 smutných zvířat a 64 záběrů sucha a pouště –
-popraskaná zem, duny, kutálející se suchá tráva, pouštní ještěrky a velbloudi,
-kapající kohoutek; žádné kreslené ani s textem).
+Základ je ručně vybraný balík skutečných záběrů v `src/data/gifs.json`
+(žádné kreslené ani s textem):
+
+- `ano` – 65 koupajících se zvířat,
+- `ne` – 101 smutných a naštvaných zvířat (54 + 47),
+- `sucho` – 29 vtipných GIFů se suchem a žízní: nejde voda z kohoutku ani ze sprchy,
+  lidé umírající žízní, kutálející se suchá tráva.
+
+Při NE jsou na nástěnce ze tří čtvrtin zvířátka a ze čtvrtiny sucho (na 16 fotkách
+3–5 suchých, hlídá to `hromadka()` v `src/pages/index.astro`).
 V prohlížeči se hrají jako animovaný WebP v `<img>` – funguje na každém telefonu,
 i v úsporném režimu, kde video samo nehraje. Každá návštěva
 dostane náhodný výběr, dlaždice se samy prolínají a klik na dlaždici ukáže nový GIF.
 
 ### GIPHY (volitelné)
 
-S klíčem se při každém buildu přidá až 100 + 150 čerstvých GIFů z GIPHY. Build běží
+S klíčem se při každém buildu přidá až 100 + 150 + 50 čerstvých GIFů z GIPHY. Build běží
 při každé změně stavu a jednou denně.
 
 1. Na https://developers.giphy.com vytvořte aplikaci typu API a zkopírujte klíč.

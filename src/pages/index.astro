@@ -25,7 +25,7 @@ const jsonLd = JSON.stringify({
 }).replace(/</g, '\\u003c');
 
 // Data pro skript v prohlížeči (`<` escapované, ať JSON nemůže ukončit <script>).
-const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/</g, '\\u003c');
+const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne, sucho: pools.sucho }).replace(/</g, '\\u003c');
 ---
 
 <Layout
@@ -89,6 +89,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     status: Status;
     ano: string[];
     ne: string[];
+    sucho: string[];
   };
   const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
   /*
@@ -190,14 +191,42 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
   const visible = new Set<HTMLElement>();
   const assigned = new Map<HTMLElement, string>();
   const changedAt = new WeakMap<HTMLElement, number>();
-  let queue: string[] = [];
   let mood: Stav = data.status.tece ? 'ano' : 'ne';
 
-  /** Další GIF pro aktuální stav: nikdy ten, který už visí, a neviděné mají přednost. */
-  function nextId(): string {
-    const pool = data[mood];
+  /*
+   * Při NE jsou na nástěnce ze tří čtvrtin smutná a naštvaná zvířátka (`ne`)
+   * a ze čtvrtiny vtipné sucho a žízeň (`sucho`).
+   */
+  type Hromadka = 'ano' | 'ne' | 'sucho';
+  const SUCHO_PODIL = 0.25;
+  const suchoIds = new Set(data.sucho ?? []);
+  const queues: Record<Hromadka, string[]> = { ano: [], ne: [], sucho: [] };
+
+  /**
+   * Z jaké hromádky bude fotka. Podíl sucha se drží kolem čtvrtiny (na 16 fotkách
+   * 3–5), napůl je to ale náhoda, ať se sucho stěhuje po nástěnce.
+   */
+  function hromadka(photo: HTMLElement): Hromadka {
+    if (mood === 'ano') return 'ano';
+    if (!suchoIds.size) return 'ne';
+    let others = 0;
+    let dry = 0;
+    for (const [p, id] of assigned) {
+      if (p === photo) continue;
+      others++;
+      if (suchoIds.has(id)) dry++;
+    }
+    const chybi = SUCHO_PODIL * (others + 1) - dry;
+    return Math.random() < (SUCHO_PODIL + chybi) / 2 ? 'sucho' : 'ne';
+  }
+
+  /** Další GIF do fotky: nikdy ten, který už visí, a neviděné mají přednost. */
+  function nextId(photo: HTMLElement): string {
+    const key = hromadka(photo);
+    const pool = data[key];
     const onScreen = new Set(assigned.values());
     for (let round = 0; round < 2; round++) {
+      const queue = queues[key];
       while (queue.length) {
         const id = queue.pop()!;
         if (!onScreen.has(id)) return id;
@@ -206,7 +235,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
       const fresh = shuffle(free.filter((id) => !seen.includes(id)));
       // Fronta se bere od konce: nejdřív neviděné, pak ty viděné nejdávněji.
       const stale = free.filter((id) => seen.includes(id)).sort((a, b) => seen.indexOf(a) - seen.indexOf(b));
-      queue = [...stale, ...fresh];
+      queues[key] = [...stale, ...fresh];
     }
     return pick(pool);
   }
@@ -248,16 +277,18 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
         img.src = gif(id, 'gif');
       } else {
         img.remove();
-        if (attempt < 3) show(photo, nextId(), attempt + 1);
+        if (attempt < 3) show(photo, nextId(photo), attempt + 1);
       }
     });
     frame.append(img);
   }
 
   function fillAll() {
-    queue = [];
+    queues.ano = [];
+    queues.ne = [];
+    queues.sucho = [];
     assigned.clear();
-    for (const p of photos) if (visible.has(p)) show(p, nextId());
+    for (const p of photos) if (visible.has(p)) show(p, nextId(p));
   }
 
   // Stahuje se a hraje jen to, co je na obrazovce.
@@ -268,7 +299,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
         const photo = e.target as HTMLElement;
         if (e.isIntersecting) {
           visible.add(photo);
-          if (!assigned.has(photo)) show(photo, nextId());
+          if (!assigned.has(photo)) show(photo, nextId(photo));
         } else {
           visible.delete(photo);
         }
@@ -283,7 +314,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     // Klik = fotku někdo přepíchne a pod ní je jiné zvíře.
     photo.addEventListener('click', () => {
       scatter(photo);
-      show(photo, nextId());
+      show(photo, nextId(photo));
       if (!paused && !reduceMotion) {
         photo.animate([{ scale: 0.9 }, { scale: 'var(--s)' }], {
           duration: 320,
@@ -302,7 +333,10 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
         const candidates = photos.filter(
           (p) => visible.has(p) && now - (changedAt.get(p) ?? 0) > max,
         );
-        if (candidates.length) show(pick(candidates), nextId());
+        if (candidates.length) {
+          const photo = pick(candidates);
+          show(photo, nextId(photo));
+        }
       }
       setTimeout(tick, rand(min, max));
     };
