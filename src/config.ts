@@ -10,10 +10,11 @@ export const GIF_SLOTS = 16;
 export const GIF_ROTATE_MS = [4000, 9000] as const;
 
 /**
- * Při NE: hlavně naštvaná zvířátka, k tomu smutná a desetina sucha a žízně.
- * Na 16 fotkách to dělá 10–12 naštvaných, 2–4 smutná a 1–2 suché.
+ * Při NE: podíl hromádek na nástěnce (0 = hromádka se nepoužije).
+ * Teď jen smutná zvířátka; naštvaná a sucho jsou v gifs.json připravené,
+ * např. { smutne: 0.2, nastvane: 0.7, sucho: 0.1 } dá na 16 fotkách 2–4 / 10–12 / 1–2.
  */
-export const NE_MIX = { nastvane: 0.7, smutne: 0.2, sucho: 0.1 } as const;
+export const NE_MIX: Record<'smutne' | 'nastvane' | 'sucho', number> = { smutne: 1, nastvane: 0, sucho: 0 };
 
 
 /**

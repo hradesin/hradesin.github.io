@@ -203,7 +203,7 @@ const data = JSON.stringify({
   /* Při NE se fotky míchají ze tří hromádek v poměru NE_MIX (config.ts). */
   type NeHromadka = keyof typeof NE_MIX;
   type Hromadka = 'ano' | NeHromadka;
-  const NE_HROMADKY = (Object.keys(NE_MIX) as NeHromadka[]).filter((k) => data[k]?.length);
+  const NE_HROMADKY = (Object.keys(NE_MIX) as NeHromadka[]).filter((k) => NE_MIX[k] > 0 && data[k]?.length);
   const hromadkaId = new Map<string, NeHromadka>();
   for (const k of NE_HROMADKY) for (const id of data[k]) hromadkaId.set(id, k);
   const queues: Record<Hromadka, string[]> = { ano: [], smutne: [], nastvane: [], sucho: [] };
