@@ -2,10 +2,11 @@
  * GIFy kolem odpovědi – v prohlížeči se z GIPHY ID skládá URL na animovaný
  * WebP (200w.webp), který se na telefonech přehraje vždycky, i bez videa.
  *
- * Základ je ručně vybraný balík skutečných zvířat (src/data/gifs.json):
- * při ANO se koupou, při NE jsou smutná, žíznivá nebo zklamaná.
+ * Základ je ručně vybraný balík skutečných zvířat a krajin (src/data/gifs.json):
+ * při ANO se koupou, při NE jsou smutná, žíznivá nebo zklamaná
+ * a mezi nimi záběry sucha a pouště.
  * Když je při buildu nastavená proměnná GIPHY_API_KEY, přidá se k němu
- * čerstvý výběr z GIPHY API (8 dotazů na build, bezplatný klíč stačí).
+ * čerstvý výběr z GIPHY API (10 dotazů na build, bezplatný klíč stačí).
  * API klíč se nikdy nedostane do stránky.
  */
 import curated from '../data/gifs.json';
@@ -13,7 +14,7 @@ import curated from '../data/gifs.json';
 export type GifPools = { ano: string[]; ne: string[]; source: 'giphy' | 'curated' };
 
 const ANO_QUERIES = ['dog bath', 'bird bath', 'otter swimming', 'dog sprinkler'];
-const NE_QUERIES = ['sad dog', 'disappointed cat', 'sad puppy eyes', 'grumpy cat'];
+const NE_QUERIES = ['sad dog', 'disappointed cat', 'sad puppy eyes', 'grumpy cat', 'tumbleweed', 'sand dunes'];
 const PER_QUERY = 25;
 const ID = /^[A-Za-z0-9]+$/;
 
