@@ -1,0 +1,38 @@
+name: Deploy
+
+on:
+  # Každá změna stavu z admin stránky je commit do main → nové nasazení.
+  push:
+    branches: [main]
+  # Jednou denně nový výběr GIFů z GIPHY.
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: withastro/action@v6
+        env:
+          GIPHY_API_KEY: ${{ secrets.GIPHY_API_KEY }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

@@ -1,0 +1,363 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import status from '../../data/status.json';
+import { formatPrague } from '../../lib/format';
+
+const stav = status.tece ? 'ano' : 'ne';
+---
+
+<Layout title="Změnit stav vody" noindex stav={stav}>
+  <main class="admin">
+    <h1>Změnit stav vody</h1>
+    <p class="now">
+      Web teď ukazuje <strong id="current">{status.tece ? 'ANO' : 'NE'}</strong>{' '}
+      <span class="muted">(<time id="current-time">{formatPrague(status.zmeneno)}</time>)</span>
+    </p>
+
+    <form id="login" class="login" hidden>
+      <label for="token">Heslo</label>
+      <input
+        id="token"
+        name="token"
+        type="password"
+        autocomplete="current-password"
+        spellcheck="false"
+        required
+      />
+      <p class="hint">
+        Heslo je GitHub token s právem zapisovat do repozitáře. Zadáváte ho jen jednou, toto
+        zařízení si ho zapamatuje.
+      </p>
+      <button type="submit" class="btn btn-quiet">Přihlásit</button>
+    </form>
+
+    <div id="controls" class="controls" hidden>
+      <button type="button" class="btn btn-ano" data-tece="true">Teče</button>
+      <button type="button" class="btn btn-ne" data-tece="false">Neteče</button>
+    </div>
+
+    <p id="message" class="message" role="status" aria-live="polite"></p>
+
+    <p class="links">
+      <a href={import.meta.env.BASE_URL}>Zobrazit web</a>
+      <button type="button" id="logout" class="link" hidden>Odhlásit toto zařízení</button>
+    </p>
+  </main>
+</Layout>
+
+<script>
+  import { REPO, BRANCH, STATUS_PATH } from '../../config';
+  import { formatPrague } from '../../lib/format';
+
+  type Status = { tece: boolean; zmeneno: string };
+
+  const TOKEN_KEY = 'hradesin-voda:token';
+  const API = `https://api.github.com/repos/${REPO}/contents/${STATUS_PATH}`;
+  const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+  const login = $<HTMLFormElement>('login');
+  const tokenInput = $<HTMLInputElement>('token');
+  const controls = $<HTMLDivElement>('controls');
+  const message = $<HTMLParagraphElement>('message');
+  const logout = $<HTMLButtonElement>('logout');
+  const current = $<HTMLElement>('current');
+  const currentTime = $<HTMLElement>('current-time');
+  const buttons = Array.from(controls.querySelectorAll<HTMLButtonElement>('button'));
+
+  const store = {
+    get: () => {
+      try {
+        return localStorage.getItem(TOKEN_KEY);
+      } catch {
+        return null;
+      }
+    },
+    set: (v: string) => {
+      try {
+        localStorage.setItem(TOKEN_KEY, v);
+      } catch {
+        /* soukromé okno – token platí jen do zavření stránky */
+      }
+    },
+    clear: () => {
+      try {
+        localStorage.removeItem(TOKEN_KEY);
+      } catch {
+        /* nic */
+      }
+    },
+  };
+
+  let token = store.get();
+
+  function say(text: string, tone: 'info' | 'ok' | 'error' = 'info') {
+    message.textContent = text;
+    message.dataset.tone = tone;
+  }
+
+  function showStatus(s: Status) {
+    current.textContent = s.tece ? 'ANO' : 'NE';
+    currentTime.textContent = formatPrague(s.zmeneno);
+    document.body.dataset.stav = s.tece ? 'ano' : 'ne';
+  }
+
+  function showUi() {
+    const loggedIn = Boolean(token);
+    login.hidden = loggedIn;
+    controls.hidden = !loggedIn;
+    logout.hidden = !loggedIn;
+    if (!loggedIn) tokenInput.focus();
+  }
+
+  const headers = () => ({
+    Accept: 'application/vnd.github+json',
+    Authorization: `Bearer ${token}`,
+  });
+
+  async function fetchLive(): Promise<Status | null> {
+    try {
+      const res = await fetch(`${base}status.json?t=${Date.now()}`, { cache: 'no-store' });
+      return res.ok ? ((await res.json()) as Status) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  login.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const candidate = tokenInput.value.trim();
+    if (!candidate) return;
+    say('Ověřuji heslo…');
+    const res = await fetch('https://api.github.com/user', {
+      headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${candidate}` },
+    }).catch(() => null);
+    if (!res) return say('Nepodařilo se spojit s GitHubem. Zkontrolujte připojení.', 'error');
+    if (!res.ok) return say('Heslo nefunguje. Zkontrolujte, že jste vložili celý token.', 'error');
+    token = candidate;
+    store.set(candidate);
+    tokenInput.value = '';
+    say('Přihlášeno.', 'ok');
+    showUi();
+  });
+
+  logout.addEventListener('click', () => {
+    token = null;
+    store.clear();
+    say('Toto zařízení je odhlášené.');
+    showUi();
+  });
+
+  async function save(tece: boolean) {
+    buttons.forEach((b) => (b.disabled = true));
+    const label = tece ? 'ANO' : 'NE';
+    try {
+      say(`Ukládám ${label}…`);
+      const getRes = await fetch(`${API}?ref=${BRANCH}`, { headers: headers(), cache: 'no-store' });
+      if (getRes.status === 401) throw new Error('auth');
+      if (!getRes.ok) throw new Error(`GitHub vrátil ${getRes.status} při čtení stavu.`);
+      const { sha } = (await getRes.json()) as { sha: string };
+
+      const next: Status = { tece, zmeneno: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z') };
+      const putRes = await fetch(API, {
+        method: 'PUT',
+        headers: { ...headers(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Stav vody: ${label}`,
+          content: btoa(JSON.stringify(next, null, 2) + '\n'),
+          sha,
+          branch: BRANCH,
+        }),
+      });
+      if (putRes.status === 401) throw new Error('auth');
+      if (putRes.status === 403 || putRes.status === 404)
+        throw new Error('Token nemá právo zapisovat. Potřebuje oprávnění Contents: Read and write.');
+      if (putRes.status === 409) throw new Error('Stav se mezitím změnil. Zkuste to znovu.');
+      if (!putRes.ok) throw new Error(`GitHub vrátil ${putRes.status} při ukládání.`);
+
+      await waitForDeploy(next);
+    } catch (err) {
+      const msg = (err as Error).message;
+      if (msg === 'auth') {
+        token = null;
+        store.clear();
+        showUi();
+        say('Heslo přestalo platit. Přihlaste se znovu.', 'error');
+      } else {
+        say(msg || 'Uložení selhalo.', 'error');
+      }
+    } finally {
+      buttons.forEach((b) => (b.disabled = false));
+    }
+  }
+
+  async function waitForDeploy(next: Status) {
+    const label = next.tece ? 'ANO' : 'NE';
+    const started = Date.now();
+    while (Date.now() - started < 5 * 60_000) {
+      const secs = Math.round((Date.now() - started) / 1000);
+      say(`Uloženo. Web se aktualizuje, obvykle do minuty (${secs} s)…`);
+      await new Promise((r) => setTimeout(r, 5000));
+      const live = await fetchLive();
+      if (live && live.zmeneno === next.zmeneno) {
+        showStatus(live);
+        say(`Hotovo. Web teď ukazuje ${label}.`, 'ok');
+        return;
+      }
+    }
+    say(
+      'Uloženo, ale web se zatím neaktualizoval. Zkontrolujte záložku Actions na GitHubu.',
+      'error',
+    );
+  }
+
+  buttons.forEach((b) => b.addEventListener('click', () => save(b.dataset.tece === 'true')));
+
+  showUi();
+  fetchLive().then((s) => s && showStatus(s));
+</script>
+
+<style>
+  .admin {
+    width: min(480px, 100%);
+    margin: 0 auto;
+    padding: max(48px, env(safe-area-inset-top)) 16px 48px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(1.75rem, 1.2rem + 2vw, 2.25rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .now {
+    margin: 12px 0 32px;
+    font-size: 1.0625rem;
+  }
+
+  .now strong {
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  .muted,
+  .hint {
+    color: var(--muted);
+  }
+
+  .login {
+    display: grid;
+    gap: 8px;
+  }
+
+  .login label {
+    font-weight: 600;
+  }
+
+  .login input {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 14px;
+    font: inherit;
+    color: var(--ink);
+    background: color-mix(in oklab, var(--paper) 60%, white);
+    border: 1.5px solid color-mix(in oklab, var(--ink) 30%, transparent);
+    border-radius: var(--radius);
+  }
+
+  .hint {
+    margin: 0 0 8px;
+    font-size: 0.875rem;
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .btn {
+    min-height: 56px;
+    padding: 12px 20px;
+    font: inherit;
+    font-size: 1.25rem;
+    font-weight: 700;
+    border: 0;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition:
+      transform 0.1s ease,
+      opacity 0.2s ease;
+  }
+
+  .btn:active {
+    transform: scale(0.98);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: progress;
+  }
+
+  .controls .btn {
+    min-height: 120px;
+    font-size: 1.75rem;
+    color: #fff;
+  }
+
+  .btn-ano {
+    background: var(--ano);
+  }
+
+  .btn-ne {
+    background: var(--ne);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .controls .btn {
+      color: #0d2433;
+    }
+  }
+
+  .btn-quiet {
+    font-size: 1rem;
+    color: var(--paper);
+    background: var(--ink);
+  }
+
+  .message {
+    min-height: 3em;
+    margin: 24px 0 0;
+  }
+
+  .message[data-tone='ok'] {
+    color: var(--ano);
+    font-weight: 600;
+  }
+
+  .message[data-tone='error'] {
+    color: var(--ne);
+    font-weight: 600;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    margin: 16px 0 0;
+    font-size: 0.9375rem;
+  }
+
+  .link {
+    padding: 0;
+    font: inherit;
+    color: var(--muted);
+    background: none;
+    border: 0;
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+    cursor: pointer;
+  }
+</style>

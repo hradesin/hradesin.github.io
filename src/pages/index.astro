@@ -1,0 +1,307 @@
+---
+import Layout from '../layouts/Layout.astro';
+import status from '../data/status.json';
+import { getGifPools } from '../lib/gifs';
+import { formatPrague } from '../lib/format';
+import { GIF_SLOTS, OFFICIAL_NEWS_URL } from '../config';
+
+const pools = await getGifPools();
+const stav = status.tece ? 'ano' : 'ne';
+const slots = Array.from({ length: GIF_SLOTS }, (_, i) => i + 1);
+
+// Data pro skript v prohlížeči (`<` escapované, ať JSON nemůže ukončit <script>).
+const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/</g, '\\u003c');
+---
+
+<Layout
+  title="Teče voda v Hradešíně?"
+  description="Teče teď v Hradešíně voda? Jednoduše ano, nebo ne."
+  stav={stav}
+>
+  <link slot="head" rel="preconnect" href="https://media.giphy.com" crossorigin />
+
+  <main class="stage">
+    {
+      slots.map((n) => (
+        <figure class={`tile t${n}`}>
+          <video muted loop playsinline preload="none" disablepictureinpicture />
+        </figure>
+      ))
+    }
+
+    <section class="hero" aria-labelledby="otazka">
+      <h1 id="otazka">Teče voda v&nbsp;Hradešíně?</h1>
+      <p class="answer" id="answer" aria-live="polite">{status.tece ? 'ANO' : 'NE'}</p>
+      <p class="updated">
+        Aktualizováno <time id="time" datetime={status.zmeneno}>{formatPrague(status.zmeneno)}</time>
+      </p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>
+      Neoficiální stránka, stav ručně nastavuje správce. Oficiální zprávy najdete
+      v&nbsp;<a href={OFFICIAL_NEWS_URL} rel="noopener">aktualitách obce</a>.
+    </p>
+    <p class="giphy">Powered by <a href="https://giphy.com" rel="noopener">GIPHY</a></p>
+  </footer>
+
+  <script type="application/json" id="data" set:html={data} />
+</Layout>
+
+<script>
+  import { formatPrague, shuffle } from '../lib/format';
+
+  type Gif = { src: string; title: string };
+  type Status = { tece: boolean; zmeneno: string };
+
+  const data = JSON.parse(document.getElementById('data')?.textContent ?? '{}') as {
+    status: Status;
+    ano: Gif[];
+    ne: Gif[];
+  };
+  const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+
+  const answer = document.getElementById('answer')!;
+  const time = document.getElementById('time')!;
+  const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+  const videos = Array.from(document.querySelectorAll<HTMLVideoElement>('.tile video'));
+
+  // Bez animací, když si to uživatel přeje nebo šetří data – ukážeme jen první snímek.
+  const calm =
+    matchMedia('(prefers-reduced-motion: reduce)').matches ||
+    Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData);
+
+  const visible = new WeakSet<HTMLVideoElement>();
+
+  function play(v: HTMLVideoElement) {
+    if (!calm && visible.has(v) && v.dataset.src) v.play().catch(() => {});
+  }
+
+  function load(v: HTMLVideoElement) {
+    const src = v.dataset.src;
+    if (!src || v.getAttribute('src') === src) return;
+    v.preload = calm ? 'metadata' : 'auto';
+    v.src = calm ? `${src}#t=0.1` : src;
+  }
+
+  // Videa se stahují a hrají, jen když jsou na obrazovce.
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        const v = e.target as HTMLVideoElement;
+        if (e.isIntersecting) {
+          visible.add(v);
+          load(v);
+          play(v);
+        } else {
+          visible.delete(v);
+          v.pause();
+        }
+      }
+    },
+    { rootMargin: '120px' },
+  );
+
+  for (const v of videos) {
+    io.observe(v);
+    // Klepnutí pozastaví / pustí (jediná cesta k pohybu v klidném režimu).
+    v.parentElement?.addEventListener('click', () => (v.paused ? v.play().catch(() => {}) : v.pause()));
+  }
+
+  function setGifs(tece: boolean) {
+    const picks = shuffle(tece ? data.ano : data.ne);
+    videos.forEach((v, i) => {
+      const gif = picks[i % picks.length];
+      v.dataset.src = gif.src;
+      v.setAttribute('aria-label', gif.title);
+      v.parentElement?.setAttribute('title', gif.title);
+      if (visible.has(v)) {
+        load(v);
+        play(v);
+      }
+    });
+  }
+
+  function render(s: Status, animate: boolean) {
+    const stav = s.tece ? 'ano' : 'ne';
+    const changed = document.body.dataset.stav !== stav;
+    document.body.dataset.stav = stav;
+    answer.textContent = s.tece ? 'ANO' : 'NE';
+    time.textContent = formatPrague(s.zmeneno);
+    time.setAttribute('datetime', s.zmeneno);
+    themeColor?.setAttribute('content', getComputedStyle(document.body).getPropertyValue('--paper').trim());
+    if (animate && changed && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      answer.animate([{ opacity: 0, transform: 'scale(0.94)' }, { opacity: 1, transform: 'none' }], {
+        duration: 600,
+        easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+      });
+    }
+  }
+
+  let current = data.status;
+  render(current, false);
+  setGifs(current.tece);
+
+  // GitHub Pages cachuje HTML ~10 min, čerstvý stav si proto dotahujeme zvlášť.
+  async function refresh() {
+    try {
+      const res = await fetch(`${base}status.json?t=${Date.now()}`, { cache: 'no-store' });
+      if (!res.ok) return;
+      const s = (await res.json()) as Status;
+      if (s.tece === current.tece && s.zmeneno === current.zmeneno) return;
+      const moodChanged = s.tece !== current.tece;
+      current = s;
+      render(s, true);
+      if (moodChanged) setGifs(s.tece);
+    } catch {
+      /* offline – necháme poslední známý stav */
+    }
+  }
+
+  refresh();
+  setInterval(refresh, 60_000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refresh();
+  });
+</script>
+
+<style>
+  /*
+   * Desktop: GIFy rámují odpověď.     Mobil: pruh nahoře, odpověď, mřížka pod ní.
+   *   [1][2][3][4]                      [1][2][3]
+   *   [5][ odpověď ][6]                  odpověď
+   *   [7][         ][8]                 [4][5][6]
+   *   [9][10][11][12]                   [7][8][9] …
+   */
+  .stage {
+    width: min(1080px, 100%);
+    margin: 0 auto;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 0
+      max(16px, env(safe-area-inset-left));
+    display: grid;
+    gap: var(--gap);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .hero {
+    grid-column: 1 / -1;
+    order: 1;
+    padding: clamp(32px, 8vw, 56px) 0 clamp(28px, 7vw, 48px);
+    text-align: center;
+    container-type: inline-size;
+  }
+
+  .tile:nth-of-type(n + 4) {
+    order: 2;
+  }
+
+  h1 {
+    margin: 0 auto;
+    max-width: 18ch;
+    font-size: clamp(1.375rem, 1rem + 1.6vw, 2rem);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .answer {
+    margin: 0.06em 0 0;
+    /* "ANO" je široké ~2,3 em – velikost podle šířky prostředního pole. */
+    font-size: min(38cqi, 15rem);
+    font-weight: 800;
+    line-height: 0.82;
+    letter-spacing: -0.045em;
+    color: var(--accent);
+    transition: color 0.5s ease;
+    animation: arrive 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  @keyframes arrive {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+  }
+
+  .updated {
+    margin: 20px 0 0;
+    font-size: 0.9375rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tile {
+    margin: 0;
+    aspect-ratio: 1;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--tile);
+    cursor: pointer;
+  }
+
+  .tile video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .foot {
+    width: min(1080px, 100%);
+    margin: 0 auto;
+    padding: 32px 16px max(32px, env(safe-area-inset-bottom));
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+
+  .foot p {
+    margin: 0 auto 6px;
+    max-width: 60ch;
+  }
+
+  .giphy {
+    font-size: 0.75rem;
+  }
+
+  @media (min-width: 960px) {
+    .stage {
+      /* Celý rámeček GIFů (4×4 čtverce) se vejde na výšku obrazovky. */
+      width: min(1080px, 100%, max(760px, 100dvh - 24px));
+      padding-top: 24px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-areas:
+        't1 t2 t3 t4'
+        't5 hero hero t6'
+        't7 hero hero t8'
+        't9 t10 t11 t12';
+    }
+
+    .hero {
+      grid-area: hero;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 16px;
+    }
+
+    .tile:nth-of-type(n) {
+      order: 0;
+    }
+
+    .t1 { grid-area: t1; }
+    .t2 { grid-area: t2; }
+    .t3 { grid-area: t3; }
+    .t4 { grid-area: t4; }
+    .t5 { grid-area: t5; }
+    .t6 { grid-area: t6; }
+    .t7 { grid-area: t7; }
+    .t8 { grid-area: t8; }
+    .t9 { grid-area: t9; }
+    .t10 { grid-area: t10; }
+    .t11 { grid-area: t11; }
+    .t12 { grid-area: t12; }
+  }
+</style>

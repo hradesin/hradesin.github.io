@@ -1,0 +1,132 @@
+---
+import { Font } from 'astro:assets';
+
+interface Props {
+  title: string;
+  description?: string;
+  noindex?: boolean;
+  stav?: 'ano' | 'ne';
+}
+const { title, description, noindex = false, stav } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+---
+
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:title" content={title} />
+    <meta property="og:type" content="website" />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content={stav === 'ne' ? '#F7E9E6' : '#E9F4FA'} />
+    <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
+    <Font cssVariable="--font-brand" preload />
+    <slot name="head" />
+  </head>
+  <body data-stav={stav}>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  /*
+   * Paleta
+   *   vodojem   #0D2433  text (hluboká voda)
+   *   hladina   #4E6473  doplňkový text
+   *   kohoutek  #0079C2  ANO
+   *   poplach   #C8102E  NE
+   *   ráno      #E9F4FA  pozadí, když voda teče
+   *   sucho     #F7E9E6  pozadí, když voda neteče
+   */
+  :root {
+    --font: var(--font-brand);
+
+    --ink: #0d2433;
+    --muted: #4e6473;
+    --ano: #0079c2;
+    --ne: #c8102e;
+    --paper-ano: #e9f4fa;
+    --paper-ne: #f7e9e6;
+    --focus: #0d2433;
+
+    --paper: var(--paper-ano);
+    --accent: var(--ano);
+    --tile: color-mix(in oklab, var(--accent) 12%, var(--paper));
+    --radius: 10px;
+    --gap: 8px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --ink: #e6f0f5;
+      --muted: #9db2bf;
+      --ano: #5cc0ff;
+      --ne: #ff6b6b;
+      --paper-ano: #071b26;
+      --paper-ne: #220d10;
+      --focus: #e6f0f5;
+    }
+  }
+
+  body[data-stav='ne'] {
+    --paper: var(--paper-ne);
+    --accent: var(--ne);
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    font-family: var(--font);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--ink);
+    background-color: var(--paper);
+    transition: background-color 0.5s ease;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: inherit;
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 1px;
+  }
+
+  a:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
