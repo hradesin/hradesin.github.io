@@ -8,136 +8,205 @@ import { GIF_SLOTS } from '../config';
 const pools = await getGifPools();
 const stav = status.tece ? 'ano' : 'ne';
 const slots = Array.from({ length: GIF_SLOTS }, (_, i) => i + 1);
+const title = status.tece ? 'ANO, voda v Hradešíně teče' : 'NE, voda v Hradešíně neteče';
 
 // Data pro skript v prohlížeči (`<` escapované, ať JSON nemůže ukončit <script>).
 const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/</g, '\\u003c');
 ---
 
-<Layout
-  title="Teče voda v Hradešíně?"
-  description="Teče teď v Hradešíně voda? Jednoduše ano, nebo ne."
-  stav={stav}
->
+<Layout title={title} description="Teče teď v Hradešíně voda? Jednoduše ano, nebo ne." stav={stav}>
   <link slot="head" rel="preconnect" href="https://media.giphy.com" crossorigin />
 
   <main class="stage">
-    {
-      slots.map((n) => (
-        <figure class={`tile t${n}`}>
-          <video muted loop playsinline preload="none" disablepictureinpicture />
-        </figure>
-      ))
-    }
+    {slots.map((n) => <figure class={`tile t${n}`} aria-hidden="true" />)}
 
     <section class="hero" aria-labelledby="otazka">
       <h1 id="otazka">Teče voda v&nbsp;Hradešíně?</h1>
       <p class="answer" id="answer" aria-live="polite">{status.tece ? 'ANO' : 'NE'}</p>
-      <p class="updated">
+      <p class="stamp">
         Aktualizováno <time id="time" datetime={status.zmeneno}>{formatPrague(status.zmeneno)}</time>
       </p>
     </section>
   </main>
 
   <footer class="foot">
-    <p class="giphy">Powered by <a href="https://giphy.com" rel="noopener">GIPHY</a></p>
+    <p>Powered by <a href="https://giphy.com" rel="noopener">GIPHY</a></p>
   </footer>
 
-  <script type="application/json" id="data" set:html={data} />
+  <script is:inline type="application/json" id="data" set:html={data} />
 </Layout>
 
 <script>
   import { formatPrague, shuffle } from '../lib/format';
+  import { GIF_ROTATE_MS } from '../config';
 
-  type Gif = { src: string; title: string };
   type Status = { tece: boolean; zmeneno: string };
+  type Stav = 'ano' | 'ne';
 
   const data = JSON.parse(document.getElementById('data')?.textContent ?? '{}') as {
     status: Status;
-    ano: Gif[];
-    ne: Gif[];
+    ano: string[];
+    ne: string[];
   };
   const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+  const mp4 = (id: string) => `https://media.giphy.com/media/${id}/200w.mp4`;
 
   const answer = document.getElementById('answer')!;
   const time = document.getElementById('time')!;
   const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-  const videos = Array.from(document.querySelectorAll<HTMLVideoElement>('.tile video'));
+  const tiles = Array.from(document.querySelectorAll<HTMLElement>('.tile'));
 
-  // Bez animací, když si to uživatel přeje nebo šetří data – ukážeme jen první snímek.
-  const calm =
-    matchMedia('(prefers-reduced-motion: reduce)').matches ||
-    Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData);
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const saveData = Boolean(
+    (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData,
+  );
+  // V klidném režimu žádný pohyb sám od sebe – jen první snímek. Klepnutí pustí nový GIF.
+  const calm = reduceMotion || saveData;
 
-  const visible = new WeakSet<HTMLVideoElement>();
+  /* ---------- GIFy ---------- */
 
-  function play(v: HTMLVideoElement) {
-    if (!calm && visible.has(v) && v.dataset.src) v.play().catch(() => {});
+  const visible = new Set<HTMLElement>();
+  const assigned = new Map<HTMLElement, string>();
+  let queue: string[] = [];
+  let mood: Stav = data.status.tece ? 'ano' : 'ne';
+
+  /** Další GIF z balíku pro aktuální stav – nikdy ten, který už je na obrazovce. */
+  function nextId(): string {
+    const pool = data[mood];
+    const onScreen = new Set(assigned.values());
+    for (let round = 0; round < 2; round++) {
+      while (queue.length) {
+        const id = queue.pop()!;
+        if (!onScreen.has(id)) return id;
+      }
+      queue = shuffle(pool.filter((id) => !onScreen.has(id)));
+    }
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
-  function load(v: HTMLVideoElement) {
-    const src = v.dataset.src;
-    if (!src || v.getAttribute('src') === src) return;
-    v.preload = calm ? 'metadata' : 'auto';
-    v.src = calm ? `${src}#t=0.1` : src;
+  function makeVideo(id: string, play: boolean): HTMLVideoElement {
+    const v = document.createElement('video');
+    v.muted = true;
+    v.loop = true;
+    v.playsInline = true;
+    v.disablePictureInPicture = true;
+    v.preload = play ? 'auto' : 'metadata';
+    v.src = play ? mp4(id) : `${mp4(id)}#t=0.1`;
+    return v;
   }
 
-  // Videa se stahují a hrají, jen když jsou na obrazovce.
+  const changedAt = new WeakMap<HTMLElement, number>();
+
+  /** Vloží do dlaždice nový GIF a prolne ho přes starý, až je načtený. */
+  function show(tile: HTMLElement, id: string, play = !calm) {
+    assigned.set(tile, id);
+    changedAt.set(tile, Date.now());
+    // Rychlé klikání: rozpracované načítání předchozího GIFu zahodíme.
+    tile.querySelectorAll('video:not(.in)').forEach((p) => p.remove());
+    const v = makeVideo(id, play);
+    v.addEventListener(
+      'loadeddata',
+      () => {
+        if (!v.isConnected) return;
+        tile.querySelectorAll('video.in:not(.leaving)').forEach((old) => {
+          old.classList.add('leaving');
+          setTimeout(() => old.remove(), 600);
+        });
+        v.classList.add('in');
+        if (play && visible.has(tile)) v.play().catch(() => {});
+      },
+      { once: true },
+    );
+    v.addEventListener('error', () => v.remove(), { once: true });
+    tile.append(v);
+  }
+
+  function fillTiles() {
+    queue = [];
+    assigned.clear();
+    for (const tile of tiles) if (visible.has(tile)) show(tile, nextId());
+  }
+
+  // Stahuje se a hraje jen to, co je na obrazovce.
   const io = new IntersectionObserver(
     (entries) => {
       for (const e of entries) {
-        const v = e.target as HTMLVideoElement;
+        const tile = e.target as HTMLElement;
+        const v = tile.querySelector<HTMLVideoElement>('video.in:not(.leaving)');
         if (e.isIntersecting) {
-          visible.add(v);
-          load(v);
-          play(v);
+          visible.add(tile);
+          if (!assigned.has(tile)) show(tile, nextId());
+          else if (!calm) v?.play().catch(() => {});
         } else {
-          visible.delete(v);
-          v.pause();
+          visible.delete(tile);
+          v?.pause();
         }
       }
     },
-    { rootMargin: '120px' },
+    { rootMargin: '100px' },
   );
 
-  for (const v of videos) {
-    io.observe(v);
-    // Klepnutí pozastaví / pustí (jediná cesta k pohybu v klidném režimu).
-    v.parentElement?.addEventListener('click', () => (v.paused ? v.play().catch(() => {}) : v.pause()));
-  }
-
-  function setGifs(tece: boolean) {
-    const picks = shuffle(tece ? data.ano : data.ne);
-    videos.forEach((v, i) => {
-      const gif = picks[i % picks.length];
-      v.dataset.src = gif.src;
-      v.setAttribute('aria-label', gif.title);
-      v.parentElement?.setAttribute('title', gif.title);
-      if (visible.has(v)) {
-        load(v);
-        play(v);
+  // Klik na dlaždici = nový GIF. I v klidném režimu se pak přehraje, o pohyb si člověk řekl sám.
+  for (const tile of tiles) {
+    io.observe(tile);
+    tile.addEventListener('click', () => {
+      show(tile, nextId(), true);
+      if (!reduceMotion) {
+        tile.animate([{ transform: 'scale(0.92)' }, { transform: 'scale(1)' }], {
+          duration: 420,
+          easing: 'cubic-bezier(0.3, 1.6, 0.5, 1)',
+        });
       }
     });
   }
 
-  function render(s: Status, animate: boolean) {
-    const stav = s.tece ? 'ano' : 'ne';
-    const changed = document.body.dataset.stav !== stav;
+  // Každých pár sekund se jedna viditelná dlaždice prolne na další GIF z balíku
+  // (ty, na které se právě klikalo, nechá chvíli být).
+  if (!calm) {
+    setInterval(() => {
+      if (document.hidden) return;
+      const now = Date.now();
+      const candidates = tiles.filter(
+        (t) => visible.has(t) && now - (changedAt.get(t) ?? 0) > GIF_ROTATE_MS * 2,
+      );
+      const tile = candidates[Math.floor(Math.random() * candidates.length)];
+      if (tile) show(tile, nextId());
+    }, GIF_ROTATE_MS);
+  }
+
+  /* ---------- Stav ---------- */
+
+  function render(s: Status, changed: boolean) {
+    const stav: Stav = s.tece ? 'ano' : 'ne';
     document.body.dataset.stav = stav;
     answer.textContent = s.tece ? 'ANO' : 'NE';
     time.textContent = formatPrague(s.zmeneno);
     time.setAttribute('datetime', s.zmeneno);
-    themeColor?.setAttribute('content', getComputedStyle(document.body).getPropertyValue('--paper').trim());
-    if (animate && changed && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      answer.animate([{ opacity: 0, transform: 'scale(0.94)' }, { opacity: 1, transform: 'none' }], {
-        duration: 600,
-        easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
-      });
+    document.title = s.tece ? 'ANO, voda v Hradešíně teče' : 'NE, voda v Hradešíně neteče';
+    themeColor?.setAttribute('content', s.tece ? '#0b6fb8' : '#1a1311');
+
+    if (changed && !reduceMotion) intro(stav);
+  }
+
+  /** Jediná „velká“ animace: ANO se napustí kapkami, NE jednou zabliká jako kontrolka. */
+  function intro(stav: Stav) {
+    if (stav === 'ano') {
+      answer.animate(
+        [
+          { fontVariationSettings: "'ELSH' 8, 'wght' 100" },
+          { fontVariationSettings: "'ELSH' 8, 'wght' 600" },
+        ],
+        { duration: 1200, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' },
+      );
+    } else {
+      answer.animate(
+        [{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 0.2, offset: 0.16 }, { opacity: 1, offset: 0.24 }, { opacity: 0.35, offset: 0.32 }, { opacity: 1 }],
+        { duration: 1000, easing: 'steps(1, end)' },
+      );
     }
   }
 
   let current = data.status;
-  render(current, false);
-  setGifs(current.tece);
 
   // GitHub Pages cachuje HTML ~10 min, čerstvý stav si proto dotahujeme zvlášť.
   async function refresh() {
@@ -148,8 +217,11 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
       if (s.tece === current.tece && s.zmeneno === current.zmeneno) return;
       const moodChanged = s.tece !== current.tece;
       current = s;
-      render(s, true);
-      if (moodChanged) setGifs(s.tece);
+      render(s, moodChanged);
+      if (moodChanged) {
+        mood = s.tece ? 'ano' : 'ne';
+        fillTiles();
+      }
     } catch {
       /* offline – necháme poslední známý stav */
     }
@@ -158,23 +230,24 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
   refresh();
   setInterval(refresh, 60_000);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') refresh();
+    if (!document.hidden) refresh();
   });
 </script>
 
 <style>
   /*
-   * Desktop: GIFy rámují odpověď.     Mobil: pruh nahoře, odpověď, mřížka pod ní.
-   *   [1][2][3][4]                      [1][2][3]
-   *   [5][ odpověď ][6]                  odpověď
-   *   [7][         ][8]                 [4][5][6]
-   *   [9][10][11][12]                   [7][8][9] …
+   * Desktop (≥ 960 px): 16 GIFů rámuje odpověď, celé se vejde na výšku okna.
+   *   [ 1][ 2][ 3][ 4][ 5][ 6]
+   *   [ 7][     odpověď    ][ 8]
+   *   [ 9][                ][10]
+   *   [11][12][13][14][15][16]
+   * Mobil: pruh 3 GIFů, odpověď přes celou šířku, pod ní mřížka 3 × 4.
    */
   .stage {
-    width: min(1080px, 100%);
+    width: min(1320px, 100%);
     margin: 0 auto;
-    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 0
-      max(16px, env(safe-area-inset-left));
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 0
+      max(12px, env(safe-area-inset-left));
     display: grid;
     gap: var(--gap);
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -183,108 +256,161 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
   .hero {
     grid-column: 1 / -1;
     order: 1;
-    padding: clamp(32px, 8vw, 56px) 0 clamp(28px, 7vw, 48px);
-    text-align: center;
     container-type: inline-size;
+    padding: clamp(40px, 12vw, 72px) 4px clamp(36px, 10vw, 64px);
+    text-align: center;
   }
 
   .tile:nth-of-type(n + 4) {
     order: 2;
   }
 
+  .t16 {
+    display: none;
+  }
+
   h1 {
-    margin: 0 auto;
-    max-width: 18ch;
-    font-size: clamp(1.375rem, 1rem + 1.6vw, 2rem);
+    margin: 0;
+    font-size: clamp(1.25rem, 0.95rem + 1.1vw, 1.75rem);
     font-weight: 600;
     line-height: 1.15;
-    letter-spacing: -0.01em;
+    letter-spacing: 0.005em;
     text-wrap: balance;
   }
 
   .answer {
-    margin: 0.06em 0 0;
-    /* "ANO" je široké ~2,3 em – velikost podle šířky prostředního pole. */
-    font-size: min(38cqi, 15rem);
-    font-weight: 800;
+    margin: 0.04em 0 0;
+    font-family: var(--font-dots);
+    font-size: min(52cqi, 16rem);
+    font-weight: 600;
+    font-variation-settings: 'ELSH' 8, 'wght' 600;
     line-height: 0.82;
-    letter-spacing: -0.045em;
-    color: var(--accent);
-    transition: color 0.5s ease;
-    animation: arrive 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    letter-spacing: 0.03em;
+    color: var(--answer);
+    transition: color 0.6s ease;
   }
 
-  @keyframes arrive {
+  body[data-stav='ano'] .answer {
+    animation: fill 1.2s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  body[data-stav='ne'] .answer {
+    text-shadow: 0 0 0.12em rgba(255, 91, 58, 0.45);
+    animation: flicker 1s steps(1, end) both;
+  }
+
+  @keyframes fill {
     from {
-      opacity: 0;
-      transform: scale(0.94);
+      font-variation-settings: 'ELSH' 8, 'wght' 100;
     }
   }
 
-  .updated {
-    margin: 20px 0 0;
+  @keyframes flicker {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    16% { opacity: 0.2; }
+    24% { opacity: 1; }
+    32% { opacity: 0.35; }
+    40% { opacity: 1; }
+  }
+
+  .stamp {
+    margin: 0.9em 0 0;
     font-size: 0.9375rem;
     color: var(--muted);
+  }
+
+  .stamp time {
+    margin-left: 0.25em;
+    font-family: var(--font-dots);
+    font-size: 1.45em;
+    font-variation-settings: 'ELSH' 8, 'wght' 550;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    white-space: nowrap;
     font-variant-numeric: tabular-nums;
   }
 
   .tile {
+    position: relative;
     margin: 0;
     aspect-ratio: 1;
     border-radius: var(--radius);
     overflow: hidden;
     background: var(--tile);
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
 
-  .tile video {
-    display: block;
+  .tile :global(video) {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    opacity: 0;
+    transition:
+      opacity 0.5s ease,
+      transform 0.4s ease;
+  }
+
+  /* Nové video se vkládá na konec, takže leží nad starým, dokud se staré neodebere. */
+  .tile :global(video.in) {
+    opacity: 1;
+  }
+
+  /* Napověda, že se dá kliknout: GIF se pod myší lehce přiblíží. */
+  @media (hover: hover) {
+    .tile:hover :global(video.in) {
+      transform: scale(1.06);
+    }
   }
 
   .foot {
-    width: min(1080px, 100%);
-    margin: 0 auto;
-    padding: 32px 16px max(32px, env(safe-area-inset-bottom));
+    padding: 28px 16px max(28px, env(safe-area-inset-bottom));
     text-align: center;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     color: var(--muted);
   }
 
   .foot p {
-    margin: 0 auto 6px;
-    max-width: 60ch;
-  }
-
-  .giphy {
-    font-size: 0.75rem;
+    margin: 0;
   }
 
   @media (min-width: 960px) {
     .stage {
-      /* Celý rámeček GIFů (4×4 čtverce) se vejde na výšku obrazovky. */
-      width: min(1080px, 100%, max(760px, 100dvh - 24px));
-      padding-top: 24px;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      /* 6 × 4 čtverce: šířka = 1,5 × dostupná výška → celé na jednu obrazovku. */
+      width: min(1320px, 100%, max(900px, 1.5 * (100dvh - 24px)));
+      padding-top: 12px;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       grid-template-areas:
-        't1 t2 t3 t4'
-        't5 hero hero t6'
-        't7 hero hero t8'
-        't9 t10 t11 t12';
+        't1 t2 t3 t4 t5 t6'
+        't7 hero hero hero hero t8'
+        't9 hero hero hero hero t10'
+        't11 t12 t13 t14 t15 t16';
     }
 
     .hero {
       grid-area: hero;
+      container-type: size;
       display: flex;
       flex-direction: column;
+      align-items: center;
       justify-content: center;
       padding: 0 16px;
     }
 
+    .answer {
+      font-size: min(36cqw, 60cqh, 19rem);
+    }
+
     .tile:nth-of-type(n) {
       order: 0;
+    }
+
+    .t16 {
+      display: block;
     }
 
     .t1 { grid-area: t1; }
@@ -299,5 +425,9 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     .t10 { grid-area: t10; }
     .t11 { grid-area: t11; }
     .t12 { grid-area: t12; }
+    .t13 { grid-area: t13; }
+    .t14 { grid-area: t14; }
+    .t15 { grid-area: t15; }
+    .t16 { grid-area: t16; }
   }
 </style>

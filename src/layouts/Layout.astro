@@ -1,13 +1,11 @@
 ---
-import { Font } from 'astro:assets';
-
 interface Props {
   title: string;
   description?: string;
   noindex?: boolean;
   stav?: 'ano' | 'ne';
 }
-const { title, description, noindex = false, stav } = Astro.props;
+const { title, description, noindex = false, stav = 'ano' } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 ---
 
@@ -22,10 +20,24 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
     <meta property="og:title" content={title} />
     <meta property="og:type" content="website" />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content={stav === 'ne' ? '#F7E9E6' : '#E9F4FA'} />
+    <meta name="theme-color" content={stav === 'ne' ? '#1a1311' : '#0b6fb8'} />
     <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
-    <Font cssVariable="--font-brand" preload />
+    <link rel="preload" href={`${base}fonts/handjet-cs.woff2`} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={`${base}fonts/montagu-slab-cs.woff2`} as="font" type="font/woff2" crossorigin />
+    <style is:inline set:html={`
+      @font-face {
+        font-family: 'Handjet';
+        src: url('${base}fonts/handjet-cs.woff2') format('woff2');
+        font-weight: 100 900;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Montagu Slab';
+        src: url('${base}fonts/montagu-slab-cs.woff2') format('woff2');
+        font-weight: 400 700;
+        font-display: swap;
+      }
+    `} />
     <slot name="head" />
   </head>
   <body data-stav={stav}>
@@ -35,47 +47,36 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
 <style is:global>
   /*
-   * Paleta
-   *   vodojem   #0D2433  text (hluboká voda)
-   *   hladina   #4E6473  doplňkový text
-   *   kohoutek  #0079C2  ANO
-   *   poplach   #C8102E  NE
-   *   ráno      #E9F4FA  pozadí, když voda teče
-   *   sucho     #F7E9E6  pozadí, když voda neteče
+   * Písma (obě z Brna, OFL, ořezaná na latinku + češtinu):
+   *   Handjet (Rosetta)            odpověď složená z kapek, časové razítko
+   *   Montagu Slab (F. Karsten)    otázka a texty, tón obecní vyhlášky
+   *
+   * Paleta – dvě nálady, ne jedna přebarvená šablona:
+   *   ANO  bazén   #0B6FB8  pozadí      kapka  #E9F6FF  odpověď
+   *   NE   sucho   #1A1311  pozadí      kontrolka #FF5B3A odpověď
    */
   :root {
-    --font: var(--font-brand);
+    --font-dots: 'Handjet', ui-monospace, monospace;
+    --font-text: 'Montagu Slab', Georgia, 'Times New Roman', serif;
 
-    --ink: #0d2433;
-    --muted: #4e6473;
-    --ano: #0079c2;
-    --ne: #c8102e;
-    --paper-ano: #e9f4fa;
-    --paper-ne: #f7e9e6;
-    --focus: #0d2433;
+    --bg: #0b6fb8;
+    --ink: #ffffff;
+    --muted: rgba(255, 255, 255, 0.78);
+    --answer: #e9f6ff;
+    --tile: rgba(255, 255, 255, 0.12);
+    --line: rgba(255, 255, 255, 0.35);
 
-    --paper: var(--paper-ano);
-    --accent: var(--ano);
-    --tile: color-mix(in oklab, var(--accent) 12%, var(--paper));
-    --radius: 10px;
-    --gap: 8px;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme='light']) {
-      --ink: #e6f0f5;
-      --muted: #9db2bf;
-      --ano: #5cc0ff;
-      --ne: #ff6b6b;
-      --paper-ano: #071b26;
-      --paper-ne: #220d10;
-      --focus: #e6f0f5;
-    }
+    --radius: 6px;
+    --gap: 6px;
   }
 
   body[data-stav='ne'] {
-    --paper: var(--paper-ne);
-    --accent: var(--ne);
+    --bg: #1a1311;
+    --ink: #f5e9e4;
+    --muted: rgba(245, 233, 228, 0.7);
+    --answer: #ff5b3a;
+    --tile: rgba(245, 233, 228, 0.07);
+    --line: rgba(245, 233, 228, 0.3);
   }
 
   *,
@@ -96,18 +97,20 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
   body {
     margin: 0;
     min-height: 100dvh;
-    font-family: var(--font);
-    font-size: 1rem;
-    line-height: 1.5;
+    font-family: var(--font-text);
+    font-size: 1.0625rem;
+    line-height: 1.45;
     color: var(--ink);
-    background-color: var(--paper);
-    transition: background-color 0.5s ease;
+    background-color: var(--bg);
+    transition:
+      background-color 0.6s ease,
+      color 0.6s ease;
     -webkit-font-smoothing: antialiased;
   }
 
   a {
     color: inherit;
-    text-underline-offset: 0.18em;
+    text-underline-offset: 0.2em;
     text-decoration-thickness: 1px;
   }
 
@@ -116,9 +119,9 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
   }
 
   :focus-visible {
-    outline: 2px solid var(--focus);
+    outline: 2px solid var(--ink);
     outline-offset: 3px;
-    border-radius: 4px;
+    border-radius: 2px;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -126,6 +129,7 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
   }

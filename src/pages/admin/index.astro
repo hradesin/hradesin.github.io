@@ -228,18 +228,21 @@ const stav = status.tece ? 'ano' : 'ne';
     margin: 0;
     font-size: clamp(1.75rem, 1.2rem + 2vw, 2.25rem);
     font-weight: 700;
-    letter-spacing: -0.02em;
     line-height: 1.1;
   }
 
   .now {
     margin: 12px 0 32px;
-    font-size: 1.0625rem;
   }
 
   .now strong {
-    color: var(--accent);
-    font-weight: 800;
+    font-family: var(--font-dots);
+    font-size: 1.6em;
+    font-weight: 600;
+    font-variation-settings: 'ELSH' 8, 'wght' 600;
+    letter-spacing: 0.04em;
+    color: var(--answer);
+    vertical-align: -0.08em;
   }
 
   .muted,
@@ -253,7 +256,7 @@ const stav = status.tece ? 'ano' : 'ne';
   }
 
   .login label {
-    font-weight: 600;
+    font-weight: 700;
   }
 
   .login input {
@@ -262,8 +265,8 @@ const stav = status.tece ? 'ano' : 'ne';
     padding: 10px 14px;
     font: inherit;
     color: var(--ink);
-    background: color-mix(in oklab, var(--paper) 60%, white);
-    border: 1.5px solid color-mix(in oklab, var(--ink) 30%, transparent);
+    background: var(--tile);
+    border: 1.5px solid var(--line);
     border-radius: var(--radius);
   }
 
@@ -279,10 +282,9 @@ const stav = status.tece ? 'ano' : 'ne';
   }
 
   .btn {
-    min-height: 56px;
+    min-height: 52px;
     padding: 12px 20px;
     font: inherit;
-    font-size: 1.25rem;
     font-weight: 700;
     border: 0;
     border-radius: var(--radius);
@@ -302,28 +304,26 @@ const stav = status.tece ? 'ano' : 'ne';
   }
 
   .controls .btn {
-    min-height: 120px;
-    font-size: 1.75rem;
-    color: #fff;
+    min-height: 128px;
+    font-family: var(--font-dots);
+    font-size: 2.75rem;
+    font-weight: 600;
+    font-variation-settings: 'ELSH' 8, 'wght' 600;
+    letter-spacing: 0.03em;
   }
 
   .btn-ano {
-    background: var(--ano);
+    color: #0b5a95;
+    background: #e9f6ff;
   }
 
   .btn-ne {
-    background: var(--ne);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .controls .btn {
-      color: #0d2433;
-    }
+    color: #1a1311;
+    background: #ff5b3a;
   }
 
   .btn-quiet {
-    font-size: 1rem;
-    color: var(--paper);
+    color: var(--bg);
     background: var(--ink);
   }
 
@@ -332,14 +332,9 @@ const stav = status.tece ? 'ano' : 'ne';
     margin: 24px 0 0;
   }
 
-  .message[data-tone='ok'] {
-    color: var(--ano);
-    font-weight: 600;
-  }
-
+  .message[data-tone='ok'],
   .message[data-tone='error'] {
-    color: var(--ne);
-    font-weight: 600;
+    font-weight: 700;
   }
 
   .links {
@@ -357,7 +352,7 @@ const stav = status.tece ? 'ano' : 'ne';
     background: none;
     border: 0;
     text-decoration: underline;
-    text-underline-offset: 0.18em;
+    text-underline-offset: 0.2em;
     cursor: pointer;
   }
 </style>

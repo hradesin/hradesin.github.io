@@ -23,14 +23,26 @@ Heslo je **fine-grained GitHub token**, který umí zapisovat jen do tohoto repo
 Token není nikde v kódu, takže zdrojáky webu nic neprozradí. Když ho ztratíte,
 na GitHubu ho smažte a vytvořte nový.
 
-## GIFy z GIPHY (volitelné)
+## GIFy
 
-Bez klíče se používá 12 + 12 ručně vybraných GIFů. S klíčem se při každém buildu
-stáhne až 60 + 60 náhodných GIFů a každá návštěva vidí jiný výběr. Build běží
+Základ je ručně vybraný balík skutečných zvířat v `src/data/gifs.json`
+(53 koupajících se pro ANO, 47 smutných pro NE, žádné kreslené). Každá návštěva
+dostane náhodný výběr, dlaždice se samy prolínají a klik na dlaždici ukáže nový GIF.
+
+### GIPHY (volitelné)
+
+S klíčem se při každém buildu přidá až 100 + 100 čerstvých GIFů z GIPHY. Build běží
 při každé změně stavu a jednou denně.
 
 1. Na https://developers.giphy.com vytvořte aplikaci typu API a zkopírujte klíč.
 2. `gh secret set GIPHY_API_KEY --repo Kovic77/hradesin-voda`
+
+## Písma
+
+Obě z Brna, licence OFL, ořezaná na latinku s češtinou (`public/fonts/`):
+
+- **Handjet** (Rosetta) – odpověď ANO/NE složená z kapek a čas aktualizace
+- **Montagu Slab** (Florian Karsten) – otázka a texty
 
 ## Vývoj
 
