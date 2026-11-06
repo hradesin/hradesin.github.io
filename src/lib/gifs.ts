@@ -3,19 +3,26 @@
  * WebP (200w.webp), který se na telefonech přehraje vždycky, i bez videa.
  *
  * Základ je ručně vybraný balík skutečných záběrů (src/data/gifs.json):
- * při ANO se zvířata koupou, při NE jsou smutná nebo naštvaná (`ne`)
- * a čtvrtinu nástěnky dělá vtipné sucho a žízeň (`sucho`: nejde voda,
- * žízniví lidé, kutálející se suchá tráva).
+ * při ANO se zvířata koupou, při NE jsou hlavně naštvaná (`nastvane`),
+ * k tomu smutná (`smutne`) a desetina vtipného sucha a žízně (`sucho`:
+ * nejde voda, žízniví lidé, kutálející se suchá tráva). Poměr je NE_MIX v config.ts.
  * Když je při buildu nastavená proměnná GIPHY_API_KEY, přidá se k němu
- * čerstvý výběr z GIPHY API (12 dotazů na build, bezplatný klíč stačí).
+ * čerstvý výběr z GIPHY API (13 dotazů na build, bezplatný klíč stačí).
  * API klíč se nikdy nedostane do stránky.
  */
 import curated from '../data/gifs.json';
 
-export type GifPools = { ano: string[]; ne: string[]; sucho: string[]; source: 'giphy' | 'curated' };
+export type GifPools = {
+  ano: string[];
+  smutne: string[];
+  nastvane: string[];
+  sucho: string[];
+  source: 'giphy' | 'curated';
+};
 
 const ANO_QUERIES = ['dog bath', 'bird bath', 'otter swimming', 'dog sprinkler'];
-const NE_QUERIES = ['sad dog', 'disappointed cat', 'sad puppy eyes', 'grumpy cat', 'angry cat', 'angry goose'];
+const SMUTNE_QUERIES = ['sad dog', 'disappointed cat', 'sad puppy eyes'];
+const NASTVANE_QUERIES = ['angry cat', 'hissing cat', 'angry chihuahua', 'angry goose'];
 const SUCHO_QUERIES = ['tumbleweed', 'no water'];
 const PER_QUERY = 25;
 const ID = /^[A-Za-z0-9]+$/;
@@ -47,22 +54,35 @@ export function getGifPools(): Promise<GifPools> {
 }
 
 async function load(): Promise<GifPools> {
-  const base = { ano: curated.ano, ne: curated.ne, sucho: curated.sucho };
+  const base = { ano: curated.ano, smutne: curated.smutne, nastvane: curated.nastvane, sucho: curated.sucho };
   const apiKey = process.env.GIPHY_API_KEY;
   if (!apiKey) return { ...base, source: 'curated' };
 
   try {
     const fetchAll = async (qs: string[]) =>
       (await Promise.all(qs.map((q) => search(apiKey, q)))).flat();
-    const [ano, ne, sucho] = await Promise.all([
+    const [ano, smutne, nastvane, sucho] = await Promise.all([
       fetchAll(ANO_QUERIES),
-      fetchAll(NE_QUERIES),
+      fetchAll(SMUTNE_QUERIES),
+      fetchAll(NASTVANE_QUERIES),
       fetchAll(SUCHO_QUERIES),
     ]);
-    console.info(`[gifs] GIPHY: +${ano.length} veselých, +${ne.length} smutných, +${sucho.length} suchých.`);
+    console.info(
+      `[gifs] GIPHY: +${ano.length} veselých, +${smutne.length} smutných, +${nastvane.length} naštvaných, +${sucho.length} suchých.`,
+    );
+    // Jeden GIF jen v jedné hromádce, jinak by nesedělo počítání poměru na nástěnce.
     const suchoAll = unique([...base.sucho, ...sucho]);
-    const neAll = unique([...base.ne, ...ne]).filter((id) => !suchoAll.includes(id));
-    return { ano: unique([...base.ano, ...ano]), ne: neAll, sucho: suchoAll, source: 'giphy' };
+    const nastvaneAll = unique([...base.nastvane, ...nastvane]).filter((id) => !suchoAll.includes(id));
+    const smutneAll = unique([...base.smutne, ...smutne]).filter(
+      (id) => !suchoAll.includes(id) && !nastvaneAll.includes(id),
+    );
+    return {
+      ano: unique([...base.ano, ...ano]),
+      smutne: smutneAll,
+      nastvane: nastvaneAll,
+      sucho: suchoAll,
+      source: 'giphy',
+    };
   } catch (err) {
     console.warn('[gifs] GIPHY selhalo, používám ruční výběr:', (err as Error).message);
     return { ...base, source: 'curated' };

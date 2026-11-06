@@ -9,6 +9,12 @@ export const GIF_SLOTS = 16;
 /** Jedna fotka se sama vymění v náhodném intervalu (ms) – pravidelný rytmus působí strojově. */
 export const GIF_ROTATE_MS = [4000, 9000] as const;
 
+/**
+ * Při NE: hlavně naštvaná zvířátka, k tomu smutná a desetina sucha a žízně.
+ * Na 16 fotkách to dělá 10–12 naštvaných, 2–4 smutná a 1–2 suché.
+ */
+export const NE_MIX = { nastvane: 0.7, smutne: 0.2, sucho: 0.1 } as const;
+
 
 /**
  * Návštěvnost (Umami Cloud, EU, bez cookies). Skript měří jen na ostré doméně.

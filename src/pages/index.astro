@@ -25,7 +25,13 @@ const jsonLd = JSON.stringify({
 }).replace(/</g, '\\u003c');
 
 // Data pro skript v prohlížeči (`<` escapované, ať JSON nemůže ukončit <script>).
-const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne, sucho: pools.sucho }).replace(/</g, '\\u003c');
+const data = JSON.stringify({
+  status,
+  ano: pools.ano,
+  smutne: pools.smutne,
+  nastvane: pools.nastvane,
+  sucho: pools.sucho,
+}).replace(/</g, '\\u003c');
 ---
 
 <Layout
@@ -80,7 +86,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne, sucho: pools
 
 <script>
   import { shuffle } from '../lib/format';
-  import { GIF_ROTATE_MS, UMAMI } from '../config';
+  import { GIF_ROTATE_MS, NE_MIX, UMAMI } from '../config';
 
   type Status = { tece: boolean; zmeneno: string };
   type Stav = 'ano' | 'ne';
@@ -88,7 +94,8 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne, sucho: pools
   const data = JSON.parse(document.getElementById('data')?.textContent ?? '{}') as {
     status: Status;
     ano: string[];
-    ne: string[];
+    smutne: string[];
+    nastvane: string[];
     sucho: string[];
   };
   const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
@@ -193,31 +200,35 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne, sucho: pools
   const changedAt = new WeakMap<HTMLElement, number>();
   let mood: Stav = data.status.tece ? 'ano' : 'ne';
 
-  /*
-   * Při NE jsou na nástěnce ze tří čtvrtin smutná a naštvaná zvířátka (`ne`)
-   * a ze čtvrtiny vtipné sucho a žízeň (`sucho`).
-   */
-  type Hromadka = 'ano' | 'ne' | 'sucho';
-  const SUCHO_PODIL = 0.25;
-  const suchoIds = new Set(data.sucho ?? []);
-  const queues: Record<Hromadka, string[]> = { ano: [], ne: [], sucho: [] };
+  /* Při NE se fotky míchají ze tří hromádek v poměru NE_MIX (config.ts). */
+  type NeHromadka = keyof typeof NE_MIX;
+  type Hromadka = 'ano' | NeHromadka;
+  const NE_HROMADKY = (Object.keys(NE_MIX) as NeHromadka[]).filter((k) => data[k]?.length);
+  const hromadkaId = new Map<string, NeHromadka>();
+  for (const k of NE_HROMADKY) for (const id of data[k]) hromadkaId.set(id, k);
+  const queues: Record<Hromadka, string[]> = { ano: [], smutne: [], nastvane: [], sucho: [] };
 
   /**
-   * Z jaké hromádky bude fotka. Podíl sucha se drží kolem čtvrtiny (na 16 fotkách
-   * 3–5), napůl je to ale náhoda, ať se sucho stěhuje po nástěnce.
+   * Z jaké hromádky bude fotka. Váha = podíl + kolik do podílu na nástěnce chybí,
+   * takže poměr drží, ale napůl je to náhoda a hromádky se po nástěnce stěhují.
    */
   function hromadka(photo: HTMLElement): Hromadka {
-    if (mood === 'ano') return 'ano';
-    if (!suchoIds.size) return 'ne';
+    if (mood === 'ano' || !NE_HROMADKY.length) return 'ano';
+    const counts: Record<NeHromadka, number> = { smutne: 0, nastvane: 0, sucho: 0 };
     let others = 0;
-    let dry = 0;
     for (const [p, id] of assigned) {
       if (p === photo) continue;
       others++;
-      if (suchoIds.has(id)) dry++;
+      const k = hromadkaId.get(id);
+      if (k) counts[k]++;
     }
-    const chybi = SUCHO_PODIL * (others + 1) - dry;
-    return Math.random() < (SUCHO_PODIL + chybi) / 2 ? 'sucho' : 'ne';
+    const weights = NE_HROMADKY.map((k) => Math.max(0, NE_MIX[k] * (others + 2) - counts[k]));
+    let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+    for (let i = 0; i < NE_HROMADKY.length; i++) {
+      r -= weights[i];
+      if (r < 0) return NE_HROMADKY[i];
+    }
+    return NE_HROMADKY[0];
   }
 
   /** Další GIF do fotky: nikdy ten, který už visí, a neviděné mají přednost. */
@@ -284,9 +295,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne, sucho: pools
   }
 
   function fillAll() {
-    queues.ano = [];
-    queues.ne = [];
-    queues.sucho = [];
+    for (const k of Object.keys(queues) as Hromadka[]) queues[k] = [];
     assigned.clear();
     for (const p of photos) if (visible.has(p)) show(p, nextId(p));
   }

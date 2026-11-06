@@ -42,19 +42,20 @@ Základ je ručně vybraný balík skutečných záběrů v `src/data/gifs.json`
 (žádné kreslené ani s textem):
 
 - `ano` – 65 koupajících se zvířat,
-- `ne` – 101 smutných a naštvaných zvířat (54 + 47),
+- `nastvane` – 47 naštvaných zvířat (syčící kočky, vrčící čivavy, husy, mývalové),
+- `smutne` – 54 smutných zvířat,
 - `sucho` – 29 vtipných GIFů se suchem a žízní: nejde voda z kohoutku ani ze sprchy,
   lidé umírající žízní, kutálející se suchá tráva.
 
-Při NE jsou na nástěnce ze tří čtvrtin zvířátka a ze čtvrtiny sucho (na 16 fotkách
-3–5 suchých, hlídá to `hromadka()` v `src/pages/index.astro`).
+Při NE je poměr 70 % naštvaných, 20 % smutných a 10 % sucha (`NE_MIX` v `src/config.ts`);
+na 16 fotkách to dělá 10–12 naštvaných, 2–4 smutná a 1–2 suché.
 V prohlížeči se hrají jako animovaný WebP v `<img>` – funguje na každém telefonu,
 i v úsporném režimu, kde video samo nehraje. Každá návštěva
 dostane náhodný výběr, dlaždice se samy prolínají a klik na dlaždici ukáže nový GIF.
 
 ### GIPHY (volitelné)
 
-S klíčem se při každém buildu přidá až 100 + 150 + 50 čerstvých GIFů z GIPHY. Build běží
+S klíčem se při každém buildu přidá až 100 (ANO) + 75 + 100 + 50 (NE) čerstvých GIFů z GIPHY. Build běží
 při každé změně stavu a jednou denně.
 
 1. Na https://developers.giphy.com vytvořte aplikaci typu API a zkopírujte klíč.
