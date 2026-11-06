@@ -1,6 +1,6 @@
 /**
- * GIFy kolem odpovědi – v prohlížeči se z GIPHY ID skládá URL na MP4
- * (2–5× menší než GIF/WebP).
+ * GIFy kolem odpovědi – v prohlížeči se z GIPHY ID skládá URL na animovaný
+ * WebP (200w.webp), který se na telefonech přehraje vždycky, i bez videa.
  *
  * Základ je ručně vybraný balík skutečných zvířat (src/data/gifs.json):
  * při ANO se koupou, při NE jsou smutná, žíznivá nebo zklamaná.

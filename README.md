@@ -39,7 +39,9 @@ do repozitáře, proto token platí jen pro tento repozitář a jen rok.
 ## GIFy
 
 Základ je ručně vybraný balík skutečných zvířat v `src/data/gifs.json`
-(53 koupajících se pro ANO, 47 smutných pro NE, žádné kreslené). Každá návštěva
+(65 koupajících se pro ANO, 54 smutných pro NE, žádné kreslené ani s textem).
+V prohlížeči se hrají jako animovaný WebP v `<img>` – funguje na každém telefonu,
+i v úsporném režimu, kde video samo nehraje. Každá návštěva
 dostane náhodný výběr, dlaždice se samy prolínají a klik na dlaždici ukáže nový GIF.
 
 ### GIPHY (volitelné)
@@ -74,7 +76,8 @@ Písma z Google Fonts (OFL), uložená v `public/fonts/` a ořezaná na latinku 
 ## Návštěvnost
 
 [Umami Cloud](https://cloud.umami.is) (bez cookies), měří jen na `hradesin.github.io`.
-Řádek „Přítomno za posledních 5 min“ čte veřejný sdílený přehled Umami (jen čtení);
+Řádek „Kolik tu dnes bylo Hradešíňáků?“ (návštěvníci od pražské půlnoci) čte veřejný
+sdílený přehled Umami (jen čtení);
 když Umami neodpoví, řádek se prostě nezobrazí. Nastavení v `src/config.ts` (`UMAMI`).
 
 ## Vývoj

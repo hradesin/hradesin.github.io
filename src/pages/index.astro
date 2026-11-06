@@ -53,7 +53,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
       <h1 id="otazka">Teče voda v&nbsp;Hradešíně?</h1>
       <p class="stamp" id="answer" aria-live="polite">{status.tece ? 'ANO' : 'NE'}</p>
       <p class="present" id="present" hidden>
-        Přítomno za posledních 5 min: <strong id="present-n">1</strong>
+        Kolik tu dnes bylo Hradešíňáků? <strong id="present-n">1</strong>
       </p>
     </section>
 
@@ -91,7 +91,13 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     ne: string[];
   };
   const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
-  const mp4 = (id: string) => `https://media.giphy.com/media/${id}/200w.mp4`;
+  /*
+   * GIFy jako animovaný WebP v <img>: obrázek se na telefonech přehraje vždycky
+   * (i v úsporném režimu iPhonu, kde video samo nehraje). Statický první snímek
+   * dostane jen ten, kdo animace zastaví tlačítkem nebo má v systému omezený pohyb.
+   */
+  const gif = (id: string, kind: 'anim' | 'gif' | 'still') =>
+    `https://media.giphy.com/media/${id}/${{ anim: '200w.webp', gif: '200w.gif', still: '200w_s.gif' }[kind]}`;
 
   const notice = document.getElementById('notice')!;
   const answer = document.getElementById('answer')!;
@@ -100,14 +106,11 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
   const photos = Array.from(document.querySelectorAll<HTMLButtonElement>('.photo'));
 
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const saveData = Boolean(
-    (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData,
-  );
   /* ---------- Pohyb: dá se zastavit (WCAG 2.2.2), volba se pamatuje ---------- */
 
-  // Kdo má v systému omezený pohyb nebo šetří data, začíná se zastavenými animacemi.
+  // Kdo má v systému zapnuté omezení pohybu, začíná se zastavenými animacemi.
   const MOTION_KEY = 'hradesin-voda:pohyb';
-  let paused = reduceMotion || saveData;
+  let paused = reduceMotion;
   try {
     const pref = localStorage.getItem(MOTION_KEY);
     if (pref === 'stop') paused = true;
@@ -206,42 +209,47 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     return pick(pool);
   }
 
-  function makeVideo(id: string, play: boolean): HTMLVideoElement {
-    // Zastavené: jen metadata a první snímek, zbytek se stáhne až po spuštění.
-    const v = document.createElement('video');
-    v.muted = true;
-    v.loop = true;
-    v.playsInline = true;
-    v.disablePictureInPicture = true;
-    v.preload = play ? 'auto' : 'metadata';
-    v.src = play ? mp4(id) : `${mp4(id)}#t=0.1`;
-    return v;
+  function makeImage(id: string): HTMLImageElement {
+    const img = new Image();
+    img.alt = '';
+    img.decoding = 'async';
+    img.draggable = false;
+    img.dataset.id = id;
+    img.src = gif(id, paused ? 'still' : 'anim');
+    return img;
   }
 
   /** Vloží do fotky nový GIF a prolne ho přes starý, až je načtený. */
-  function show(photo: HTMLElement, id: string, play = !paused) {
+  function show(photo: HTMLElement, id: string, attempt = 0) {
     const frame = photo.querySelector<HTMLElement>('.frame')!;
     assigned.set(photo, id);
     changedAt.set(photo, Date.now());
     markSeen(id);
     // Rychlé klikání: rozpracované načítání předchozího GIFu zahodíme.
-    frame.querySelectorAll('video:not(.in)').forEach((p) => p.remove());
-    const v = makeVideo(id, play);
-    v.addEventListener(
-      'loadeddata',
-      () => {
-        if (!v.isConnected) return;
-        frame.querySelectorAll('video.in:not(.leaving)').forEach((old) => {
-          old.classList.add('leaving');
-          setTimeout(() => old.remove(), 600);
-        });
-        v.classList.add('in');
-        if (play && visible.has(photo)) v.play().catch(() => {});
-      },
-      { once: true },
-    );
-    v.addEventListener('error', () => v.remove(), { once: true });
-    frame.append(v);
+    frame.querySelectorAll('img:not(.in)').forEach((p) => p.remove());
+    const img = makeImage(id);
+    let fellBack = false;
+    const reveal = () => {
+      if (!img.isConnected || img.classList.contains('in')) return;
+      frame.querySelectorAll('img.in:not(.leaving)').forEach((old) => {
+        old.classList.add('leaving');
+        setTimeout(() => old.remove(), 600);
+      });
+      img.classList.add('in');
+    };
+    img.addEventListener('load', () => img.decode().then(reveal, reveal), { once: false });
+    img.addEventListener('error', () => {
+      if (!img.isConnected) return;
+      // WebP nejde → jednou zkusit klasický GIF, pak jiné zvíře. Prázdná dlaždice nikdy.
+      if (!fellBack && !paused) {
+        fellBack = true;
+        img.src = gif(id, 'gif');
+      } else {
+        img.remove();
+        if (attempt < 3) show(photo, nextId(), attempt + 1);
+      }
+    });
+    frame.append(img);
   }
 
   function fillAll() {
@@ -253,20 +261,18 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
   // Stahuje se a hraje jen to, co je na obrazovce.
   const io = new IntersectionObserver(
     (entries) => {
+      // Stahuje se jen to, co je na obrazovce nebo těsně pod ní.
       for (const e of entries) {
         const photo = e.target as HTMLElement;
-        const v = photo.querySelector<HTMLVideoElement>('video.in:not(.leaving)');
         if (e.isIntersecting) {
           visible.add(photo);
           if (!assigned.has(photo)) show(photo, nextId());
-          else if (!paused) v?.play().catch(() => {});
         } else {
           visible.delete(photo);
-          v?.pause();
         }
       }
     },
-    { rootMargin: '100px' },
+    { rootMargin: '200px' },
   );
 
   for (const photo of photos) {
@@ -306,11 +312,10 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     motionBtn.setAttribute('aria-pressed', String(paused));
     motionBtn.setAttribute('aria-label', label);
     motionBtn.title = label;
-    for (const p of photos) {
-      const v = p.querySelector<HTMLVideoElement>('video.in:not(.leaving)');
-      if (!v) continue;
-      if (paused) v.pause();
-      else if (visible.has(p)) v.play().catch(() => {});
+    // Obrázek nejde pozastavit – vymění se za statický první snímek a zpět.
+    for (const img of document.querySelectorAll<HTMLImageElement>('.frame img')) {
+      const id = img.dataset.id;
+      if (id) img.src = gif(id, paused ? 'still' : 'anim');
     }
   }
 
@@ -338,7 +343,28 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
 
   stamp(true);
 
-  /* ---------- Přítomno: návštěvníci za posledních 5 minut (Umami) ---------- */
+  /* ---------- Kolik tu dnes bylo Hradešíňáků (Umami, od pražské půlnoci) ---------- */
+
+  /** Dnešní půlnoc v Praze jako timestamp – stejná pro každého, ať je kdekoli. */
+  function pragueMidnight(now = new Date()): number {
+    const parts = Object.fromEntries(
+      new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Europe/Prague',
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hourCycle: 'h23',
+      })
+        .formatToParts(now)
+        .map((p) => [p.type, Number(p.value)]),
+    );
+    const wall = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+    const offset = Math.round((wall - now.getTime()) / 60_000) * 60_000;
+    return Date.UTC(parts.year, parts.month - 1, parts.day) - offset;
+  }
 
   const present = document.getElementById('present')!;
   const presentN = document.getElementById('present-n')!;
@@ -351,7 +377,13 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
         if (!r.ok) throw new Error();
         share = (await r.json()) as { websiteId: string; token: string };
       }
-      const r = await fetch(`${UMAMI.api}/websites/${share.websiteId}/active`, {
+      const now = Date.now();
+      const query = new URLSearchParams({
+        startAt: String(pragueMidnight()),
+        endAt: String(now),
+        timezone: 'Europe/Prague',
+      });
+      const r = await fetch(`${UMAMI.api}/websites/${share.websiteId}/stats?${query}`, {
         headers: { 'x-umami-share-token': share.token, 'x-umami-share-context': '1' },
         cache: 'no-store',
       });
@@ -360,9 +392,10 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
         return updatePresent(false);
       }
       if (!r.ok) throw new Error();
-      const { visitors } = (await r.json()) as { visitors?: unknown };
+      const { visitors: raw } = (await r.json()) as { visitors?: number | { value?: number } };
+      const visitors = typeof raw === 'number' ? raw : raw?.value;
       if (typeof visitors !== 'number') throw new Error();
-      // Kdo se právě dívá, je přítomen – i když ho Umami ještě nestihlo započítat.
+      // Kdo se právě dívá, dnes tu byl – i když ho Umami ještě nestihlo započítat.
       presentN.textContent = String(Math.max(1, visitors));
       present.hidden = false;
     } catch {
@@ -509,7 +542,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     transition: color 0.6s ease;
   }
 
-  /* Úřední záznam o přítomných, drobně dole na listu. */
+  /* Úřední záznam o dnešní účasti, drobně dole na listu. */
   .present {
     margin: 22px 0 0;
     font-size: 0.75rem;
@@ -597,7 +630,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     );
   }
 
-  .frame :global(video) {
+  .frame :global(img) {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -607,8 +640,8 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     transition: opacity 0.5s ease;
   }
 
-  /* Nové video se vkládá na konec, takže leží nad starým, dokud se staré neodebere. */
-  .frame :global(video.in) {
+  /* Nový GIF se vkládá na konec, takže leží nad starým, dokud se starý neodebere. */
+  .frame :global(img.in) {
     opacity: 1;
   }
 
