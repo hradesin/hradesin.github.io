@@ -2,8 +2,13 @@
 import Layout from '../../layouts/Layout.astro';
 import status from '../../data/status.json';
 import { formatPrague } from '../../lib/format';
+import { seal } from '../../lib/vault';
 
 const stav = status.tece ? 'ano' : 'ne';
+
+// GitHub token zamčený heslem – obojí jen z GitHub secrets, do stránky jde šifrovaný blob.
+const { ADMIN_TOKEN, ADMIN_PASSWORD } = process.env;
+const vault = ADMIN_TOKEN && ADMIN_PASSWORD ? await seal(ADMIN_TOKEN.trim(), ADMIN_PASSWORD) : null;
 ---
 
 <Layout title="Změnit stav vody" noindex stav={stav}>
@@ -24,10 +29,13 @@ const stav = status.tece ? 'ano' : 'ne';
         spellcheck="false"
         required
       />
-      <p class="hint">
-        Heslo je GitHub token s právem zapisovat do repozitáře. Zadáváte ho jen jednou, toto
-        zařízení si ho zapamatuje.
-      </p>
+      {
+        !vault && (
+          <p class="hint">
+            Heslo ještě není nastavené. Zatím se přihlaste GitHub tokenem (viz README).
+          </p>
+        )
+      }
       <button type="submit" class="btn btn-quiet">Přihlásit</button>
     </form>
 
@@ -40,18 +48,22 @@ const stav = status.tece ? 'ano' : 'ne';
 
     <p class="links">
       <a href={import.meta.env.BASE_URL}>Zobrazit web</a>
-      <button type="button" id="logout" class="link" hidden>Odhlásit toto zařízení</button>
+      <button type="button" id="logout" class="link" hidden>Odhlásit</button>
     </p>
   </main>
+
+  <script is:inline type="application/json" id="vault" set:html={JSON.stringify(vault)} />
 </Layout>
 
 <script>
   import { REPO, BRANCH, STATUS_PATH } from '../../config';
   import { formatPrague } from '../../lib/format';
+  import { unseal, type Vault } from '../../lib/vault';
 
   type Status = { tece: boolean; zmeneno: string };
 
   const TOKEN_KEY = 'hradesin-voda:token';
+  const vault = JSON.parse(document.getElementById('vault')?.textContent || 'null') as Vault | null;
   const API = `https://api.github.com/repos/${REPO}/contents/${STATUS_PATH}`;
   const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
@@ -65,29 +77,37 @@ const stav = status.tece ? 'ano' : 'ne';
   const currentTime = $<HTMLElement>('current-time');
   const buttons = Array.from(controls.querySelectorAll<HTMLButtonElement>('button'));
 
+  // Rozšifrovaný token žije jen v tomto panelu (sessionStorage), po zavření se zapomene.
   const store = {
     get: () => {
       try {
-        return localStorage.getItem(TOKEN_KEY);
+        return sessionStorage.getItem(TOKEN_KEY);
       } catch {
         return null;
       }
     },
     set: (v: string) => {
       try {
-        localStorage.setItem(TOKEN_KEY, v);
+        sessionStorage.setItem(TOKEN_KEY, v);
       } catch {
         /* soukromé okno – token platí jen do zavření stránky */
       }
     },
     clear: () => {
       try {
-        localStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(TOKEN_KEY);
       } catch {
         /* nic */
       }
     },
   };
+
+  // Úklid po starší verzi, která token ukládala natrvalo.
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* nic */
+  }
 
   let token = store.get();
 
@@ -124,16 +144,40 @@ const stav = status.tece ? 'ano' : 'ne';
     }
   }
 
+  const looksLikeToken = (s: string) => /^(github_pat_|ghp_)\w+$/.test(s);
+
   login.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const candidate = tokenInput.value.trim();
-    if (!candidate) return;
+    const input = tokenInput.value;
+    if (!input.trim()) return;
     say('Ověřuji heslo…');
+
+    // Heslo odemkne token; přímo vložený GitHub token funguje jako záloha.
+    let candidate: string;
+    if (looksLikeToken(input.trim())) {
+      candidate = input.trim();
+    } else if (!vault) {
+      return say('Heslo ještě není nastavené. Přihlaste se GitHub tokenem.', 'error');
+    } else {
+      try {
+        candidate = await unseal(vault, input);
+      } catch {
+        tokenInput.select();
+        return say('Špatné heslo.', 'error');
+      }
+    }
+
     const res = await fetch('https://api.github.com/user', {
       headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${candidate}` },
     }).catch(() => null);
     if (!res) return say('Nepodařilo se spojit s GitHubem. Zkontrolujte připojení.', 'error');
-    if (!res.ok) return say('Heslo nefunguje. Zkontrolujte, že jste vložili celý token.', 'error');
+    if (!res.ok)
+      return say(
+        looksLikeToken(input.trim())
+          ? 'Token nefunguje. Zkontrolujte, že jste vložili celý.'
+          : 'Heslo sedí, ale GitHub token za ním vypršel. Vytvořte nový (viz README).',
+        'error',
+      );
     token = candidate;
     store.set(candidate);
     tokenInput.value = '';
@@ -144,7 +188,7 @@ const stav = status.tece ? 'ano' : 'ne';
   logout.addEventListener('click', () => {
     token = null;
     store.clear();
-    say('Toto zařízení je odhlášené.');
+    say('Odhlášeno.');
     showUi();
   });
 

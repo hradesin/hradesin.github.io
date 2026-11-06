@@ -26,6 +26,9 @@ jobs:
       - uses: withastro/action@v6
         env:
           GIPHY_API_KEY: ${{ secrets.GIPHY_API_KEY }}
+          # Token se při buildu zašifruje heslem, do stránky jde jen šifrovaný blob.
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
   deploy:
     needs: build

@@ -8,20 +8,32 @@ Jednoduchá stránka s odpovědí ANO / NE a GIFy se zvířátky.
 ## Jak se mění stav
 
 Admin stránka uloží nový stav do `src/data/status.json` (commit přes GitHub API).
+Bez admin stránky jde stav změnit i přímo na GitHubu:
+https://github.com/Kovic77/hradesin-voda/edit/main/src/data/status.json
 Commit spustí GitHub Actions, web se nasadí obvykle do minuty. Otevřené stránky
 si nový stav načtou samy každou minutu.
 
 ### Heslo pro admin stránku
 
-Heslo je **fine-grained GitHub token**, který umí zapisovat jen do tohoto repozitáře:
+Na admin stránce se zadává heslo (GitHub secret `ADMIN_PASSWORD`). Za ním je
+fine-grained GitHub token (secret `ADMIN_TOKEN`), který umí zapisovat jen do tohoto
+repozitáře. Při buildu se token heslem zašifruje (PBKDF2-SHA256, 600 000 iterací,
+AES-256-GCM) a do stránky jde jen šifrovaný blob. Heslo ani token v kódu nejsou,
+rozšifrovaný token drží prohlížeč jen do zavření panelu.
 
-1. GitHub → Settings → Developer settings → Personal access tokens → **Fine-grained tokens** → Generate new token
-2. Repository access: **Only select repositories** → `hradesin-voda`
-3. Permissions → Repository permissions → **Contents: Read and write**
-4. Token vložte na admin stránce do pole Heslo. Zařízení si ho zapamatuje.
+Token:
 
-Token není nikde v kódu, takže zdrojáky webu nic neprozradí. Když ho ztratíte,
-na GitHubu ho smažte a vytvořte nový.
+1. [Nový fine-grained token](https://github.com/settings/personal-access-tokens/new?name=hradesin-voda-admin&description=Z%C3%A1pis+stavu+vody&target_name=Kovic77&expires_in=365&contents=write)
+   (formulář je předvyplněný). V **Repository access** zvolte **Only select repositories** → `hradesin-voda`.
+2. Vložte ho jako secret `ADMIN_TOKEN`:
+   https://github.com/Kovic77/hradesin-voda/settings/secrets/actions/new
+3. Spusťte nasazení: Actions → Deploy → Run workflow.
+
+Výměna hesla: přepsat secret `ADMIN_PASSWORD` a znovu spustit nasazení. Když token
+vyprší nebo unikne, smažte ho na GitHubu, vytvořte nový a přepište `ADMIN_TOKEN`.
+
+Krátké heslo jde z veřejného blobu offline hádat. Kdo ho uhodne, může zapisovat
+do repozitáře, proto token platí jen pro tento repozitář a jen rok.
 
 ## GIFy
 
