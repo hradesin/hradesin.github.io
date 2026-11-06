@@ -52,7 +52,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
       <span class="pin" aria-hidden="true"></span>
       <h1 id="otazka">Teče voda v&nbsp;Hradešíně?</h1>
       <p class="stamp" id="answer" aria-live="polite">{status.tece ? 'ANO' : 'NE'}</p>
-      <p class="present" id="present" hidden>
+      <p class="present" id="present">
         Kolik tu dnes bylo Hradešíňáků? <strong id="present-n">1</strong>
       </p>
     </section>
@@ -68,12 +68,12 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
 
   <footer class="foot">
     <p>Powered by <a href="https://giphy.com" rel="noopener">GIPHY</a></p>
+    <button type="button" class="motion" id="motion" aria-pressed="false" aria-label="Zastavit animace" title="Zastavit animace">
+      <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+      <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" /></svg>
+      <span class="motion-text" id="motion-text">Zastavit animace</span>
+    </button>
   </footer>
-
-  <button type="button" class="motion" id="motion" aria-pressed="false" aria-label="Zastavit animace" title="Zastavit animace">
-    <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
-    <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" /></svg>
-  </button>
 
   <script is:inline type="application/json" id="data" set:html={data} />
 </Layout>
@@ -106,6 +106,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
   const photos = Array.from(document.querySelectorAll<HTMLButtonElement>('.photo'));
 
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wide = matchMedia('(min-width: 960px)');
   /* ---------- Pohyb: dá se zastavit (WCAG 2.2.2), volba se pamatuje ---------- */
 
   // Kdo má v systému zapnuté omezení pohybu, začíná se zastavenými animacemi.
@@ -119,6 +120,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     /* soukromé okno */
   }
   const motionBtn = document.getElementById('motion') as HTMLButtonElement;
+  const motionText = document.getElementById('motion-text')!;
 
   const rand = (min: number, max: number) => min + Math.random() * (max - min);
   const pick = <T,>(items: readonly T[]) => items[Math.floor(Math.random() * items.length)];
@@ -132,7 +134,8 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     if (!animate || paused || reduceMotion) return;
     answer.animate(
       [
-        { scale: 1.9, opacity: 0 },
+        // Na telefonu menší rozmach, ať razítko při dopadu nevyletí z listu.
+        { scale: wide.matches ? 1.9 : 1.4, opacity: 0 },
         { scale: 0.94, opacity: 1, offset: 0.62 },
         { scale: 1, opacity: 1 },
       ],
@@ -150,7 +153,6 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
   /* ---------- Fotky na nástěnce ---------- */
 
   const PINS = ['#e23a2b', '#f2b631', '#2f7de1', '#2fa36b', '#f4f1ea'];
-  const wide = matchMedia('(min-width: 960px)');
 
   /** Připíchne fotku nahodile: natočení, posun, velikost, špendlík nebo páska. */
   function scatter(el: HTMLElement) {
@@ -283,9 +285,9 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
       scatter(photo);
       show(photo, nextId());
       if (!paused && !reduceMotion) {
-        photo.animate([{ scale: 0.82 }, { scale: 'var(--s)' }], {
-          duration: 380,
-          easing: 'cubic-bezier(0.3, 1.6, 0.5, 1)',
+        photo.animate([{ scale: 0.9 }, { scale: 'var(--s)' }], {
+          duration: 320,
+          easing: 'cubic-bezier(0.3, 1.25, 0.5, 1)',
         });
       }
     });
@@ -312,6 +314,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     motionBtn.setAttribute('aria-pressed', String(paused));
     motionBtn.setAttribute('aria-label', label);
     motionBtn.title = label;
+    motionText.textContent = label;
     // Obrázek nejde pozastavit – vymění se za statický první snímek a zpět.
     for (const img of document.querySelectorAll<HTMLImageElement>('.frame img')) {
       const id = img.dataset.id;
@@ -397,9 +400,9 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
       if (typeof visitors !== 'number') throw new Error();
       // Kdo se právě dívá, dnes tu byl – i když ho Umami ještě nestihlo započítat.
       presentN.textContent = String(Math.max(1, visitors));
-      present.hidden = false;
+      present.classList.add('on');
     } catch {
-      present.hidden = true; // počítadlo je bonus, při chybě prostě zmizí
+      present.classList.remove('on'); // počítadlo je bonus, při chybě prostě zmizí
     }
   }
 
@@ -471,7 +474,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     grid-column: 1 / -1;
     order: 1;
     margin: 14px 2px 18px;
-    padding: 44px 18px 40px;
+    padding: 38px 18px 34px;
     container-type: inline-size;
     text-align: center;
     color: var(--paper-ink);
@@ -499,14 +502,14 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     box-shadow: 2px 4px 4px rgba(0, 0, 0, 0.35);
   }
 
+  /* Otázka normálně, ne verzálkami: s háčky a čárkami se tak čte nejlíp. */
   h1 {
     margin: 0;
-    font-size: clamp(1rem, 5.2cqi, 1.75rem);
-    font-weight: 600;
+    font-size: clamp(1.25rem, 6.6cqi, 2rem);
+    font-weight: 700;
     font-stretch: 87.5%;
-    line-height: 1.2;
-    letter-spacing: 0.01em;
-    text-transform: uppercase;
+    line-height: 1.15;
+    letter-spacing: 0;
     text-wrap: balance;
   }
 
@@ -514,7 +517,8 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
   .stamp {
     --tilt: -6deg;
     display: inline-block;
-    margin: clamp(14px, 6cqi, 32px) 0 0;
+    /* Dost místa nad razítkem, ať se jeho natočený roh nedotkne otázky. */
+    margin: clamp(24px, 9cqi, 44px) 0 0;
     padding: 0.08em 0.2em 0.02em;
     font-family: var(--font-display);
     font-size: min(40cqi, 12rem);
@@ -532,6 +536,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     opacity: 0.93;
     cursor: pointer;
     user-select: none;
+    touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     -webkit-mask-image: var(--ink);
     mask-image: var(--ink);
@@ -543,14 +548,37 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
   }
 
   /* Úřední záznam o dnešní účasti, drobně dole na listu. */
+  /* Místo pro řádek je na listu od začátku – číslo jen „naskočí“, nic se neposune. */
   .present {
-    margin: 22px 0 0;
-    font-size: 0.75rem;
-    color: rgba(29, 27, 24, 0.72);
+    margin: 20px 0 0;
+    font-size: clamp(0.875rem, 3.9cqi, 1.125rem);
+    line-height: 1.3;
+    text-wrap: balance;
+    color: rgba(29, 27, 24, 0.78);
+    visibility: hidden;
+    opacity: 0;
+    transition:
+      opacity 0.4s ease,
+      visibility 0s linear 0.4s;
   }
 
+  .present.on {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.4s ease;
+  }
+
+  /* Číslo je hlavní věc řádku: písmem i barvou razítka. */
   .present strong {
-    color: var(--paper-ink);
+    display: inline-block;
+    margin-left: 0.1em;
+    font-family: var(--font-display);
+    font-size: 2.3em;
+    font-weight: 800;
+    line-height: 1;
+    vertical-align: -0.14em;
+    color: var(--stamp);
+    transition: color 0.6s ease;
   }
 
   /* ---------- Fotky ---------- */
@@ -573,9 +601,10 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     translate: var(--dx) var(--dy);
     scale: var(--s);
     transition:
-      rotate 0.5s cubic-bezier(0.3, 1.4, 0.5, 1),
-      translate 0.5s ease,
+      rotate 0.45s cubic-bezier(0.3, 1.2, 0.5, 1),
+      translate 0.45s ease,
       scale 0.25s ease;
+    touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -675,7 +704,12 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
 
   /* Atribuce GIPHY na papírovém štítku – čitelná na modré i na korku. */
   .foot {
-    padding: 34px 16px max(84px, calc(env(safe-area-inset-bottom) + 72px));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px 14px;
+    padding: 34px 16px max(28px, calc(env(safe-area-inset-bottom) + 16px));
     text-align: center;
     font-size: 0.75rem;
   }
@@ -690,28 +724,33 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.5);
   }
 
-  /* Zastavit / pustit animace: vždy po ruce v rohu. */
+  /*
+   * Zastavit / pustit animace (WCAG 2.2.2). Na telefonu nenápadný štítek dole
+   * v patičce, ať nezakrývá fotky; na počítači kulaté tlačítko v rohu.
+   */
   .motion {
-    position: fixed;
-    z-index: 40;
-    right: max(16px, env(safe-area-inset-right));
-    bottom: max(16px, env(safe-area-inset-bottom));
-    display: grid;
-    place-items: center;
-    width: 48px;
-    height: 48px;
-    padding: 0;
-    color: var(--paper-ink);
-    background: var(--paper);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 12px;
+    font: inherit;
+    color: var(--ink);
+    background: none;
     border: 0;
-    border-radius: 50%;
-    box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.6);
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .motion-text {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
   }
 
   .motion svg {
-    width: 20px;
-    height: 20px;
+    width: 14px;
+    height: 14px;
     fill: currentColor;
   }
 
@@ -721,6 +760,35 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
   }
 
   @media (min-width: 960px) {
+    .foot {
+      padding-bottom: max(84px, calc(env(safe-area-inset-bottom) + 72px));
+    }
+
+    .motion {
+      position: fixed;
+      z-index: 40;
+      right: max(16px, env(safe-area-inset-right));
+      bottom: max(16px, env(safe-area-inset-bottom));
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      color: var(--paper-ink);
+      background: var(--paper);
+      border-radius: 50%;
+      box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.6);
+    }
+
+    .motion svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .motion-text {
+      display: none;
+    }
+
     .board {
       /* 6 × 4 čtverce: šířka = 1,5 × dostupná výška → celé na jednu obrazovku. */
       width: min(1320px, 100%, max(900px, 1.5 * (100dvh - 40px)));
@@ -741,7 +809,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
       height: 100%;
       aspect-ratio: 1.414;
       margin: 0;
-      padding: 0 5cqw;
+      padding: 34px 5% 18px;
       container-type: size;
       display: flex;
       flex-direction: column;
@@ -750,21 +818,17 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     }
 
     h1 {
-      font-size: min(4.4cqw, 6.6cqh);
+      font-size: min(5.4cqw, 8cqh);
     }
 
     .stamp {
-      margin-top: 5cqh;
-      font-size: min(34cqw, 54cqh);
+      margin-top: 7cqh;
+      font-size: min(30cqw, 41cqh);
     }
 
     .present {
-      position: absolute;
-      bottom: 5cqh;
-      left: 0;
-      right: 0;
-      margin: 0;
-      font-size: min(1.9cqw, 0.8125rem);
+      margin-top: 8cqh;
+      font-size: min(3.1cqw, 4.6cqh, 1.25rem);
     }
 
     .photo:nth-of-type(n) {
