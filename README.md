@@ -2,14 +2,15 @@
 
 Jednoduchá stránka s odpovědí ANO / NE a GIFy se zvířátky.
 
-- Web: https://kovic77.github.io/hradesin-voda/
-- Změna stavu: https://kovic77.github.io/hradesin-voda/admin/
+- Web: https://hradesin.github.io/
+- Změna stavu: https://hradesin.github.io/admin/
+- Repozitář: https://github.com/hradesin/hradesin.github.io (organizace `hradesin`)
 
 ## Jak se mění stav
 
 Admin stránka uloží nový stav do `src/data/status.json` (commit přes GitHub API).
 Bez admin stránky jde stav změnit i přímo na GitHubu:
-https://github.com/Kovic77/hradesin-voda/edit/main/src/data/status.json
+https://github.com/hradesin/hradesin.github.io/edit/main/src/data/status.json
 Commit spustí GitHub Actions, web se nasadí obvykle do minuty. Otevřené stránky
 si nový stav načtou samy každou minutu.
 
@@ -23,10 +24,10 @@ rozšifrovaný token drží prohlížeč jen do zavření panelu.
 
 Token:
 
-1. [Nový fine-grained token](https://github.com/settings/personal-access-tokens/new?name=hradesin-voda-admin&description=Z%C3%A1pis+stavu+vody&target_name=Kovic77&expires_in=365&contents=write)
-   (formulář je předvyplněný). V **Repository access** zvolte **Only select repositories** → `hradesin-voda`.
+1. [Nový fine-grained token](https://github.com/settings/personal-access-tokens/new?name=hradesin-voda-admin&description=Z%C3%A1pis+stavu+vody&target_name=hradesin&expires_in=365&contents=write)
+   (formulář je předvyplněný, Resource owner = `hradesin`). V **Repository access** zvolte **Only select repositories** → `hradesin.github.io`.
 2. Vložte ho jako secret `ADMIN_TOKEN`:
-   https://github.com/Kovic77/hradesin-voda/settings/secrets/actions/new
+   https://github.com/hradesin/hradesin.github.io/settings/secrets/actions/new
 3. Spusťte nasazení: Actions → Deploy → Run workflow.
 
 Výměna hesla: přepsat secret `ADMIN_PASSWORD` a znovu spustit nasazení. Když token
@@ -47,7 +48,7 @@ S klíčem se při každém buildu přidá až 100 + 100 čerstvých GIFů z GIP
 při každé změně stavu a jednou denně.
 
 1. Na https://developers.giphy.com vytvořte aplikaci typu API a zkopírujte klíč.
-2. `gh secret set GIPHY_API_KEY --repo Kovic77/hradesin-voda`
+2. `gh secret set GIPHY_API_KEY --repo hradesin/hradesin.github.io`
 
 ## Písma
 
@@ -61,6 +62,6 @@ Obě z Brna, licence OFL, ořezaná na latinku s češtinou (`public/fonts/`):
 ```sh
 nvm use        # Node 24 (.nvmrc)
 pnpm install
-pnpm dev       # http://localhost:4321/hradesin-voda/
+pnpm dev       # http://localhost:4321/
 pnpm build
 ```

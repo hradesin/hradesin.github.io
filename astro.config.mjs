@@ -1,10 +1,9 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 
-// GitHub Pages: https://kovic77.github.io/hradesin-voda/
+// GitHub Pages: https://hradesin.github.io/ (repozitář hradesin/hradesin.github.io)
 export default defineConfig({
-  site: 'https://kovic77.github.io',
-  base: '/hradesin-voda',
+  site: 'https://hradesin.github.io',
   build: {
     // Jedna malá stránka: CSS rovnou do HTML, žádný další request.
     inlineStylesheets: 'always',
