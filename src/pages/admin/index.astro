@@ -2,13 +2,13 @@
 import Layout from '../../layouts/Layout.astro';
 import status from '../../data/status.json';
 import { formatPrague } from '../../lib/format';
-import { seal } from '../../lib/vault';
+import { getVault } from '../../lib/admin-vault';
 
 const stav = status.tece ? 'ano' : 'ne';
 
-// GitHub token zamčený heslem – obojí jen z GitHub secrets, do stránky jde šifrovaný blob.
-const { ADMIN_TOKEN, ADMIN_PASSWORD } = process.env;
-const vault = ADMIN_TOKEN && ADMIN_PASSWORD ? await seal(ADMIN_TOKEN.trim(), ADMIN_PASSWORD) : null;
+// GitHub token zamčený heslem – obojí jen z GitHub secrets. Šifrovaný blob
+// si stránka stahuje zvlášť z /admin/klic.json, tady jen víme, jestli existuje.
+const vault = await getVault();
 ---
 
 <Layout title="Změnit stav vody" noindex stav={stav}>
@@ -52,7 +52,6 @@ const vault = ADMIN_TOKEN && ADMIN_PASSWORD ? await seal(ADMIN_TOKEN.trim(), ADM
     </p>
   </main>
 
-  <script is:inline type="application/json" id="vault" set:html={JSON.stringify(vault)} />
 </Layout>
 
 <script>
@@ -63,7 +62,16 @@ const vault = ADMIN_TOKEN && ADMIN_PASSWORD ? await seal(ADMIN_TOKEN.trim(), ADM
   type Status = { tece: boolean; zmeneno: string };
 
   const TOKEN_KEY = 'hradesin-voda:token';
-  const vault = JSON.parse(document.getElementById('vault')?.textContent || 'null') as Vault | null;
+
+  /** Čerstvý šifrovaný token (HTML může být z cache starší než poslední výměna tokenu). */
+  async function loadVault(): Promise<Vault | null> {
+    try {
+      const res = await fetch(`${base}admin/klic.json?t=${Date.now()}`, { cache: 'no-store' });
+      return res.ok ? ((await res.json()) as Vault | null) : null;
+    } catch {
+      return null;
+    }
+  }
   const API = `https://api.github.com/repos/${REPO}/contents/${STATUS_PATH}`;
   const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
@@ -154,6 +162,7 @@ const vault = ADMIN_TOKEN && ADMIN_PASSWORD ? await seal(ADMIN_TOKEN.trim(), ADM
 
     // Heslo odemkne token; přímo vložený GitHub token funguje jako záloha.
     let candidate: string;
+    const vault = looksLikeToken(input.trim()) ? null : await loadVault();
     if (looksLikeToken(input.trim())) {
       candidate = input.trim();
     } else if (!vault) {
@@ -262,10 +271,36 @@ const vault = ADMIN_TOKEN && ADMIN_PASSWORD ? await seal(ADMIN_TOKEN.trim(), ADM
 </script>
 
 <style>
+  /* Admin je další list připíchnutý na nástěnce. */
   .admin {
-    width: min(480px, 100%);
-    margin: 0 auto;
-    padding: max(48px, env(safe-area-inset-top)) 16px 48px;
+    --ink: var(--paper-ink);
+    --muted: rgba(29, 27, 24, 0.72);
+    --line: rgba(29, 27, 24, 0.35);
+    --tile: #ffffff;
+    --answer: var(--stamp);
+    position: relative;
+    width: min(480px, calc(100% - 32px));
+    margin: max(40px, env(safe-area-inset-top)) auto 48px;
+    padding: 48px 20px 32px;
+    color: var(--paper-ink);
+    background: var(--paper);
+    rotate: -0.6deg;
+    box-shadow:
+      0 1px 1px rgba(0, 0, 0, 0.08),
+      0 22px 40px -20px rgba(0, 0, 0, 0.6);
+  }
+
+  .admin::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    width: 18px;
+    height: 18px;
+    margin-left: -9px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff9b8f 0 16%, #e23a2b 46%, #9c170c 100%);
+    box-shadow: 2px 4px 4px rgba(0, 0, 0, 0.35);
   }
 
   h1 {
@@ -280,13 +315,12 @@ const vault = ADMIN_TOKEN && ADMIN_PASSWORD ? await seal(ADMIN_TOKEN.trim(), ADM
   }
 
   .now strong {
-    font-family: var(--font-dots);
-    font-size: 1.6em;
-    font-weight: 600;
-    font-variation-settings: 'ELSH' 8, 'wght' 600;
+    font-family: var(--font-display);
+    font-size: 1.9em;
+    font-weight: 900;
     letter-spacing: 0.04em;
     color: var(--answer);
-    vertical-align: -0.08em;
+    vertical-align: -0.12em;
   }
 
   .muted,
@@ -347,28 +381,35 @@ const vault = ADMIN_TOKEN && ADMIN_PASSWORD ? await seal(ADMIN_TOKEN.trim(), ADM
     cursor: progress;
   }
 
+  /* Dvě razítka na papíře. */
   .controls .btn {
     min-height: 128px;
-    font-family: var(--font-dots);
-    font-size: 2.75rem;
-    font-weight: 600;
-    font-variation-settings: 'ELSH' 8, 'wght' 600;
-    letter-spacing: 0.03em;
+    font-family: var(--font-display);
+    font-size: 3rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--paper);
+    box-shadow:
+      inset 0 0 0 5px currentColor,
+      inset 0 0 0 9px var(--paper),
+      inset 0 0 0 11px currentColor,
+      0 14px 24px -14px rgba(0, 0, 0, 0.6);
   }
 
   .btn-ano {
-    color: #0b5a95;
-    background: #e9f6ff;
+    color: #3d3fb0;
+    rotate: -1.5deg;
   }
 
   .btn-ne {
-    color: #1a1311;
-    background: #ff5b3a;
+    color: #c8281f;
+    rotate: 1.5deg;
   }
 
   .btn-quiet {
-    color: var(--bg);
-    background: var(--ink);
+    color: var(--paper);
+    background: var(--paper-ink);
   }
 
   .message {

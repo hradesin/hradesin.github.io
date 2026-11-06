@@ -1,0 +1,97 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { UMAMI } from '../config';
+
+const home = import.meta.env.BASE_URL;
+---
+
+<Layout title="Tato stránka neteče – Teče voda v Hradešíně?" stav="ne" noindex>
+  <script
+    slot="head"
+    is:inline
+    defer
+    src="https://cloud.umami.is/script.js"
+    data-website-id={UMAMI.websiteId}
+    data-domains={UMAMI.domain}
+  ></script>
+
+  <main class="board">
+    <section class="notice" aria-labelledby="nadpis">
+      <span class="pin" aria-hidden="true"></span>
+      <h1 id="nadpis">Tato stránka neteče.</h1>
+      <p class="stamp" aria-hidden="true">404</p>
+      <p class="back"><a href={home}>Zpět na otázku dne</a></p>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .board {
+    display: grid;
+    place-items: center;
+    min-height: 100dvh;
+    padding: 24px 16px;
+  }
+
+  .notice {
+    position: relative;
+    width: min(560px, 100%);
+    padding: 56px 24px 40px;
+    container-type: inline-size;
+    text-align: center;
+    color: var(--paper-ink);
+    background: var(--paper);
+    rotate: -1deg;
+    box-shadow:
+      0 1px 1px rgba(0, 0, 0, 0.08),
+      0 22px 40px -20px rgba(0, 0, 0, 0.6);
+  }
+
+  .pin {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    width: 18px;
+    height: 18px;
+    margin-left: -9px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff9b8f 0 16%, #e23a2b 46%, #9c170c 100%);
+    box-shadow: 2px 4px 4px rgba(0, 0, 0, 0.35);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(1rem, 5cqi, 1.5rem);
+    font-weight: 600;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+
+  .stamp {
+    display: inline-block;
+    margin: 24px 0 0;
+    padding: 0.08em 0.2em 0.02em;
+    font-family: var(--font-display);
+    font-size: min(36cqi, 9rem);
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: 0.04em;
+    color: var(--stamp);
+    border: 0.06em solid currentColor;
+    border-radius: 0.09em;
+    box-shadow:
+      inset 0 0 0 0.035em var(--paper),
+      inset 0 0 0 0.055em currentColor;
+    rotate: 7deg;
+    mix-blend-mode: multiply;
+    opacity: 0.93;
+  }
+
+  .back {
+    margin: 28px 0 0;
+  }
+
+  .back a {
+    font-weight: 600;
+  }
+</style>

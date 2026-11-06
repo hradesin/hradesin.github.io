@@ -50,12 +50,32 @@ při každé změně stavu a jednou denně.
 1. Na https://developers.giphy.com vytvořte aplikaci typu API a zkopírujte klíč.
 2. `gh secret set GIPHY_API_KEY --repo hradesin/hradesin.github.io`
 
-## Písma
+## Vzhled
 
-Obě z Brna, licence OFL, ořezaná na latinku s češtinou (`public/fonts/`):
+Úřední deska: uprostřed připíchnutý list s otázkou a razítkem ANO/NE, kolem nahodile
+připíchnuté fotky (GIFy). Při ANO je nástěnka „zatopená“ modrou, při NE vyschlý korek.
+Klik na fotku ji přepíchne s jiným zvířetem, klik na razítko bouchne znovu. Animace jde
+zastavit tlačítkem vpravo dole (volba se pamatuje, `prefers-reduced-motion` se respektuje).
 
-- **Handjet** (Rosetta) – odpověď ANO/NE složená z kapek a čas aktualizace
-- **Montagu Slab** (Florian Karsten) – otázka a texty
+Písma z Google Fonts (OFL), uložená v `public/fonts/` a ořezaná na latinku s češtinou:
+
+- **Big Shoulders** – razítko ANO/NE
+- **Martian Mono** – text „psaný na stroji“
+
+## Sdílení, ikony, SEO
+
+- Náhled pro sdílení `public/og-ano.jpg` / `og-ne.jpg` (1200 × 630) podle stavu,
+  `?v=` v adrese obejde cache Facebooku a WhatsAppu.
+- Ikona v záložce podle stavu (`favicon-ano.svg` / `favicon-ne.svg`), web jde přidat
+  na plochu (`manifest.webmanifest`, ikony 192/512/maskable, `apple-touch-icon.png`).
+- Canonical, Open Graph, JSON-LD `WebPage` s `dateModified`, `robots.txt`, `sitemap.xml`.
+- Stránka 404 ve stejném stylu.
+
+## Návštěvnost
+
+[Umami Cloud](https://cloud.umami.is) (bez cookies), měří jen na `hradesin.github.io`.
+Řádek „Přítomno za posledních 5 min“ čte veřejný sdílený přehled Umami (jen čtení);
+když Umami neodpoví, řádek se prostě nezobrazí. Nastavení v `src/config.ts` (`UMAMI`).
 
 ## Vývoj
 

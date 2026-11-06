@@ -4,8 +4,13 @@ interface Props {
   description?: string;
   noindex?: boolean;
   stav?: 'ano' | 'ne';
+  /** Absolutní adresa stránky (canonical, og:url). */
+  canonical?: string;
+  /** Absolutní adresa náhledu pro sdílení 1200 × 630. */
+  image?: string;
+  imageAlt?: string;
 }
-const { title, description, noindex = false, stav = 'ano' } = Astro.props;
+const { title, description, noindex = false, stav = 'ano', canonical, image, imageAlt } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 ---
 
@@ -16,25 +21,39 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
-    {description && <meta property="og:description" content={description} />}
-    <meta property="og:title" content={title} />
-    <meta property="og:type" content="website" />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
-    <meta name="theme-color" content={stav === 'ne' ? '#1a1311' : '#0b6fb8'} />
-    <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
-    <link rel="preload" href={`${base}fonts/handjet-cs.woff2`} as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href={`${base}fonts/montagu-slab-cs.woff2`} as="font" type="font/woff2" crossorigin />
+    {canonical && <link rel="canonical" href={canonical} />}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Teče voda v Hradešíně?" />
+    <meta property="og:locale" content="cs_CZ" />
+    <meta property="og:title" content={title} />
+    {description && <meta property="og:description" content={description} />}
+    {canonical && <meta property="og:url" content={canonical} />}
+    {image && <meta property="og:image" content={image} />}
+    {image && <meta property="og:image:width" content="1200" />}
+    {image && <meta property="og:image:height" content="630" />}
+    {image && imageAlt && <meta property="og:image:alt" content={imageAlt} />}
+    {image && <meta name="twitter:card" content="summary_large_image" />}
+
+    <meta name="theme-color" content={stav === 'ne' ? '#c69b6d' : '#0b6fb8'} />
+    <link rel="icon" type="image/svg+xml" href={`${base}favicon-${stav}.svg`} />
+    <link rel="apple-touch-icon" href={`${base}apple-touch-icon.png`} />
+    <link rel="manifest" href={`${base}manifest.webmanifest`} />
+    <link rel="preload" href={`${base}fonts/big-shoulders-cs.woff2`} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={`${base}fonts/martian-mono-cs.woff2`} as="font" type="font/woff2" crossorigin />
     <style is:inline set:html={`
       @font-face {
-        font-family: 'Handjet';
-        src: url('${base}fonts/handjet-cs.woff2') format('woff2');
-        font-weight: 100 900;
+        font-family: 'Big Shoulders';
+        src: url('${base}fonts/big-shoulders-cs.woff2') format('woff2');
+        font-weight: 500 900;
         font-display: swap;
       }
       @font-face {
-        font-family: 'Montagu Slab';
-        src: url('${base}fonts/montagu-slab-cs.woff2') format('woff2');
-        font-weight: 400 700;
+        font-family: 'Martian Mono';
+        src: url('${base}fonts/martian-mono-cs.woff2') format('woff2');
+        font-weight: 300 700;
+        font-stretch: 75% 100%;
         font-display: swap;
       }
     `} />
@@ -47,36 +66,45 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
 <style is:global>
   /*
-   * Písma (obě z Brna, OFL, ořezaná na latinku + češtinu):
-   *   Handjet (Rosetta)            odpověď složená z kapek, časové razítko
-   *   Montagu Slab (F. Karsten)    otázka a texty, tón obecní vyhlášky
+   * Úřední deska. Písma z Google Fonts (OFL), uložená tady a ořezaná na češtinu:
+   *   Big Shoulders  razítko ANO/NE (původně písmo chicagských městských nápisů)
+   *   Martian Mono   text psaný „na stroji“
    *
-   * Paleta – dvě nálady, ne jedna přebarvená šablona:
-   *   ANO  bazén   #0B6FB8  pozadí      kapka  #E9F6FF  odpověď
-   *   NE   sucho   #1A1311  pozadí      kontrolka #FF5B3A odpověď
+   * Dvě nálady:
+   *   ANO  nástěnka zatopená vodou  #0B6FB8, razítko modrofialové #3D3FB0
+   *   NE   vyschlý korek            #C69B6D, razítko červené       #C8281F
    */
   :root {
-    --font-dots: 'Handjet', ui-monospace, monospace;
-    --font-text: 'Montagu Slab', Georgia, 'Times New Roman', serif;
+    --font-display: 'Big Shoulders', 'Arial Narrow', Impact, sans-serif;
+    --font-text: 'Martian Mono', ui-monospace, Menlo, Consolas, monospace;
 
-    --bg: #0b6fb8;
+    --board: #0b6fb8;
     --ink: #ffffff;
-    --muted: rgba(255, 255, 255, 0.78);
+    --muted: rgba(255, 255, 255, 0.8);
+    --line: rgba(255, 255, 255, 0.4);
+    --tile: rgba(255, 255, 255, 0.14);
     --answer: #e9f6ff;
-    --tile: rgba(255, 255, 255, 0.12);
-    --line: rgba(255, 255, 255, 0.35);
 
-    --radius: 6px;
-    --gap: 6px;
+    --paper: #f7f3ea;
+    --paper-ink: #1d1b18;
+    --stamp: #3d3fb0;
+    --photo: #fbfaf6;
+
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .32 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+    --radius: 3px;
+    --gap: 10px;
   }
 
   body[data-stav='ne'] {
-    --bg: #1a1311;
-    --ink: #f5e9e4;
-    --muted: rgba(245, 233, 228, 0.7);
-    --answer: #ff5b3a;
-    --tile: rgba(245, 233, 228, 0.07);
-    --line: rgba(245, 233, 228, 0.3);
+    --board: #c69b6d;
+    --ink: #2a1c12;
+    --muted: rgba(42, 28, 18, 0.72);
+    --line: rgba(42, 28, 18, 0.35);
+    --tile: rgba(42, 28, 18, 0.1);
+    --answer: #a3201a;
+    --stamp: #c8281f;
+    /* Korek: k jemnému zrnu ještě hrubší tečky. */
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .2 0 0 0 0 .12 0 0 0 0 .05 0 0 0 1.6 -.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)'/%3E%3C/svg%3E");
   }
 
   *,
@@ -98,10 +126,12 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
     margin: 0;
     min-height: 100dvh;
     font-family: var(--font-text);
-    font-size: 1.0625rem;
-    line-height: 1.45;
+    font-size: 0.9375rem;
+    font-stretch: 87.5%;
+    line-height: 1.5;
     color: var(--ink);
-    background-color: var(--bg);
+    background-color: var(--board);
+    background-image: var(--grain);
     transition:
       background-color 0.6s ease,
       color 0.6s ease;
