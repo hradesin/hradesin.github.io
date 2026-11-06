@@ -2,7 +2,6 @@
 import Layout from '../layouts/Layout.astro';
 import status from '../data/status.json';
 import { getGifPools } from '../lib/gifs';
-import { formatPrague } from '../lib/format';
 import { GIF_SLOTS } from '../config';
 
 const pools = await getGifPools();
@@ -23,9 +22,6 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     <section class="hero" aria-labelledby="otazka">
       <h1 id="otazka">Teče voda v&nbsp;Hradešíně?</h1>
       <p class="answer" id="answer" aria-live="polite">{status.tece ? 'ANO' : 'NE'}</p>
-      <p class="stamp">
-        Aktualizováno <time id="time" datetime={status.zmeneno}>{formatPrague(status.zmeneno)}</time>
-      </p>
     </section>
   </main>
 
@@ -37,7 +33,7 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
 </Layout>
 
 <script>
-  import { formatPrague, shuffle } from '../lib/format';
+  import { shuffle } from '../lib/format';
   import { GIF_ROTATE_MS } from '../config';
 
   type Status = { tece: boolean; zmeneno: string };
@@ -52,7 +48,6 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
   const mp4 = (id: string) => `https://media.giphy.com/media/${id}/200w.mp4`;
 
   const answer = document.getElementById('answer')!;
-  const time = document.getElementById('time')!;
   const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   const tiles = Array.from(document.querySelectorAll<HTMLElement>('.tile'));
 
@@ -180,8 +175,6 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     const stav: Stav = s.tece ? 'ano' : 'ne';
     document.body.dataset.stav = stav;
     answer.textContent = s.tece ? 'ANO' : 'NE';
-    time.textContent = formatPrague(s.zmeneno);
-    time.setAttribute('datetime', s.zmeneno);
     document.title = s.tece ? 'ANO, voda v Hradešíně teče' : 'NE, voda v Hradešíně neteče';
     themeColor?.setAttribute('content', s.tece ? '#0b6fb8' : '#1a1311');
 
@@ -312,23 +305,6 @@ const data = JSON.stringify({ status, ano: pools.ano, ne: pools.ne }).replace(/<
     24% { opacity: 1; }
     32% { opacity: 0.35; }
     40% { opacity: 1; }
-  }
-
-  .stamp {
-    margin: 0.9em 0 0;
-    font-size: 0.9375rem;
-    color: var(--muted);
-  }
-
-  .stamp time {
-    margin-left: 0.25em;
-    font-family: var(--font-dots);
-    font-size: 1.45em;
-    font-variation-settings: 'ELSH' 8, 'wght' 550;
-    letter-spacing: 0.04em;
-    color: var(--ink);
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
   }
 
   .tile {
