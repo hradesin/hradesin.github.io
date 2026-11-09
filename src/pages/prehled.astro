@@ -1,0 +1,1134 @@
+---
+import Layout from '../layouts/Layout.astro';
+import status from '../data/status.json';
+import { UMAMI } from '../config';
+import {
+  AKTUALIZOVANO,
+  KALENDAR,
+  MISTA,
+  PRIVADEC,
+  ZDROJE,
+} from '../data/prehled';
+
+const stav = status.tece ? 'ano' : 'ne';
+const home = import.meta.env.BASE_URL;
+const canonical = new URL('prehled/', new URL(home, Astro.site)).href;
+const version = Math.floor(Date.parse(status.zmeneno) / 1000);
+const image = new URL(`og-${stav}.jpg?v=${version}`, new URL(home, Astro.site)).href;
+
+// Datum bez časových pásem: poledne UTC, čteme UTC části.
+const den = (iso: string) => new Date(`${iso}T12:00:00Z`);
+const kratce = (iso: string) => `${den(iso).getUTCDate()}. ${den(iso).getUTCMonth() + 1}.`;
+const NAZVY_DNU = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
+const aktualizovano = `${kratce(AKTUALIZOVANO)} ${den(AKTUALIZOVANO).getUTCFullYear()}`;
+
+const title = 'Voda v Hradešíně: přehled';
+const description = `Proč v Hradešíně neteče voda, kdy začne fungovat přivaděč z Úval, kde stojí cisterny a co dělat. Jen podle oznámení obcí a provozovatele. Stav k ${aktualizovano}.`;
+
+// Kalendář: týden od pondělí, první den doplněný prázdnými políčky.
+const prvni = den(KALENDAR[0].datum);
+const predsazeni = (prvni.getUTCDay() + 6) % 7;
+const bunky = [...Array.from({ length: predsazeni }, () => null), ...KALENDAR];
+const sledovane = KALENDAR.filter((d) => d.stav !== 'nevime');
+const dnuBezVody = sledovane.filter((d) => d.stav === 'vypadek').length;
+const vychozi = [...KALENDAR].reverse().find((d) => d.pozn) ?? KALENDAR[KALENDAR.length - 1];
+const STAV_TEXT = { vypadek: 'bez vody aspoň část dne', ok: 'výpadek nebyl hlášen', nevime: 'zatím nevíme' } as const;
+const popisDne = (d: (typeof KALENDAR)[number]) =>
+  `${NAZVY_DNU[den(d.datum).getUTCDay()]} ${kratce(d.datum)}`;
+
+const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as const;
+---
+
+<Layout
+  title={title}
+  description={description}
+  stav={stav}
+  canonical={canonical}
+  image={image}
+  imageAlt="Přehled situace s vodou v Hradešíně"
+>
+  <script
+    slot="head"
+    is:inline
+    defer
+    src="https://cloud.umami.is/script.js"
+    data-website-id={UMAMI.websiteId}
+    data-domains={UMAMI.domain}
+  ></script>
+
+  <header class="hlava">
+    <a class="zpet" href={home}><span aria-hidden="true">←</span> Teče voda v Hradešíně?</a>
+    <h1>Voda v&nbsp;Hradešíně</h1>
+    <p class="podtitul">Proč neteče, kdy poteče a&nbsp;co dělat. Stav k&nbsp;{aktualizovano}.</p>
+  </header>
+
+  <main class="deska">
+    <!-- ---------- Teď ---------- -->
+    <section class="list ted" aria-labelledby="h-ted" style="--r: -0.4deg">
+      <h2 id="h-ted">Jak to vypadá teď</h2>
+      <div class="dlazdice">
+        <div class="dlazdice-1">
+          <svg class="ikona" viewBox="0 0 32 32" aria-hidden="true">
+            <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2" />
+            <path d="M16 9v7l5 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <p class="stitek-dl">Poslední ohlášená dodávka</p>
+          <p class="cislo">18–20&nbsp;h</p>
+          <p class="pod">v&nbsp;neděli 8.&nbsp;11.</p>
+        </div>
+        <div>
+          <svg class="ikona" viewBox="0 0 32 32" aria-hidden="true">
+            <rect x="5" y="7" width="22" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2" />
+            <path d="M5 13h22M11 4v6M21 4v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <text x="16" y="25" text-anchor="middle" font-size="10" font-weight="700" fill="currentColor">?</text>
+          </svg>
+          <p class="stitek-dl">Další dodávka</p>
+          <p class="cislo">?</p>
+          <p class="pod">obec ji zatím neohlásila</p>
+        </div>
+        <div class="cisterny">
+          <svg class="ikona" viewBox="0 0 32 32" aria-hidden="true">
+            <rect x="3" y="10" width="18" height="11" rx="5" fill="none" stroke="currentColor" stroke-width="2" />
+            <path d="M21 13h4l3 4v4h-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            <circle cx="9" cy="24" r="2.6" fill="currentColor" />
+            <circle cx="24" cy="24" r="2.6" fill="currentColor" />
+          </svg>
+          <p class="stitek-dl">Cisterny s&nbsp;pitnou vodou</p>
+          <p class="pod">V obci stojí dvě, pravidelně je doplňuje Stavokomplet. Klepnutím otevřete mapu:</p>
+          <ul class="mista">
+            <li>
+              <a class="misto" href={MISTA.urad} target="_blank" rel="noopener">
+                <svg class="pin" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Z" fill="currentColor" /><circle cx="12" cy="9" r="2.6" fill="#f7f3ea" /></svg>
+                <span class="misto-text"><strong>U&nbsp;obecního úřadu</strong> Hradešín 114</span>
+                <span class="misto-mapa">mapa <span aria-hidden="true">↗</span></span>
+              </a>
+            </li>
+            <li>
+              <a class="misto" href={MISTA.hrbitov} target="_blank" rel="noopener">
+                <svg class="pin" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Z" fill="currentColor" /><circle cx="12" cy="9" r="2.6" fill="#f7f3ea" /></svg>
+                <span class="misto-text"><strong>U&nbsp;hřbitova</strong></span>
+                <span class="misto-mapa">mapa <span aria-hidden="true">↗</span></span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <p class="zive">
+        Jestli voda teče právě teď, ukazuje razítko na <a href={home}>hlavní stránce</a>{' '}
+        <span class:list={['mini-razitko', stav]}>{status.tece ? 'ANO' : 'NE'}</span>
+      </p>
+    </section>
+
+    <!-- ---------- Přivaděč ---------- -->
+    <section class="list privadec" aria-labelledby="h-priv" style="--r: 0.25deg">
+      <h2 id="h-priv">Přivaděč z&nbsp;Úval: stav prací</h2>
+      <ol class="kroky" style={`--kroku: ${PRIVADEC.length}`}>
+        {
+          PRIVADEC.map((k) => (
+            <li class:list={['krok', k.stav]}>
+              <span class="krok-znak" aria-hidden="true">
+                {k.stav === 'hotovo' && (
+                  <svg viewBox="0 0 24 24">
+                    <path d="M6 12.5 10.2 16.5 18 8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                )}
+                {k.stav === 'probiha' && (
+                  <svg viewBox="0 0 24 24">
+                    <path d="M7 4h10M7 20h10M8 4c0 5 8 5 8 8s-8 3-8 8M16 4c0 5-8 5-8 8s8 3 8 8" fill="none" stroke="#0b5f9e" stroke-width="1.8" stroke-linecap="round" />
+                  </svg>
+                )}
+              </span>
+              <span class="krok-stav">{KROK_TEXT[k.stav]}</span>
+              <span class="krok-co">{k.co}</span>
+              <span class="krok-kdy">{k.kdy}</span>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="poznamka">P = obec Přišimasy, H = obec Hradešín, v&nbsp;závorce datum zprávy. Novější zprávy zatím nejsou.</p>
+
+      <div class="privadec-dole">
+        <div class="kdy">
+          <h3>Kdy poteče voda z&nbsp;Úval?</h3>
+          <p><strong>Oficiální termín zatím není.</strong></p>
+          <p>
+            Ještě chybí výsledek rozboru vody, dokončení propojení s&nbsp;vodojemem a&nbsp;povolení k&nbsp;předčasnému
+            užívání. Teprve pak může do vodojemu Hradešín téct i&nbsp;voda z&nbsp;Úval (obec Hradešín, 29.&nbsp;10.
+            a&nbsp;6.&nbsp;11.).
+          </p>
+          <p>Podle původního harmonogramu měla voda v&nbsp;přivaděči být do konce října (obec Přišimasy, 20.&nbsp;9.).</p>
+        </div>
+        <div class="kdy">
+          <h3>Co přivaděč přinese</h3>
+          <p>Voda z&nbsp;Úval posílí stávající vodojem Hradešín (obec Hradešín, 26.&nbsp;10.).</p>
+          <p>
+            U&nbsp;vodojemu Hradešín se zároveň staví nový objekt. Přivaděč se proto zatím napojí na stávající vodojem
+            dočasným potrubím (Přišimasy 3.&nbsp;11., Hradešín 6.&nbsp;11.).
+          </p>
+          <p>
+            Další krok jsou nové vlastní vrty obce. Jsou už vyvrtané, firma na jejich napojení je vybraná a&nbsp;stavba
+            má začít příští rok.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Co dělat ---------- -->
+    <section class="list delat" aria-labelledby="h-delat" style="--r: -0.25deg">
+      <h2 id="h-delat">Co dělat</h2>
+      <ul class="seznam">
+        <li>
+          <span class="odrazka" aria-hidden="true">1</span>
+          <span><strong>Šetřete vodou a&nbsp;mějte doma zásobu balené pitné vody.</strong> Výpadek může přijít kdykoli:
+          systém se vypíná sám a&nbsp;předem se to nedá odhadnout (obec, 26. a&nbsp;29.&nbsp;10.).</span>
+        </li>
+        <li>
+          <span class="odrazka" aria-hidden="true">2</span>
+          <span><strong>Cisterny s&nbsp;pitnou vodou</strong> stojí <a href={MISTA.urad} target="_blank" rel="noopener">u&nbsp;obecního úřadu</a> a&nbsp;<a href={MISTA.hrbitov} target="_blank" rel="noopener">u&nbsp;hřbitova</a> (odkazy otevřou mapu). Pravidelně je doplňuje provozovatel.</span>
+        </li>
+        <li>
+          <span class="odrazka" aria-hidden="true">3</span>
+          <span><strong>Zprávy obce do mobilu:</strong> aplikace <a href="https://www.hradesin.cz/zivot-v-obci/mobilni-aplikace-v-obraze/" rel="noopener">V&nbsp;obraze</a> (přidejte si obec Hradešín a&nbsp;povolte upozornění) nebo <a href="https://smart-info.cz/registrace/?websiteId=946" rel="noopener">zprávy SMS a&nbsp;e-mailem</a>.</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ---------- Kontakty ---------- -->
+    <section class="list kontakty" aria-labelledby="h-kontakty" style="--r: 0.45deg">
+      <h2 id="h-kontakty">Na koho se obrátit</h2>
+      <dl>
+        <dt>Stavokomplet, provozovatel vodovodu</dt>
+        <dd>Odpovídá za provoz, informace o&nbsp;výpadcích i&nbsp;náhradní vodu (cisterny). Smlouvu na vodu máte s&nbsp;ním. Tel. <a href="tel:+420326906087">326&nbsp;906&nbsp;087</a></dd>
+        <dt>Obec Hradešín</dt>
+        <dd>
+          <a href={MISTA.urad} target="_blank" rel="noopener">Hradešín 114</a>, úřední hodiny ve středu 15–18&nbsp;h.{' '}
+          <a href="mailto:obec@hradesin.cz">obec@hradesin.cz</a>, tel. <a href="tel:+420724188989">724&nbsp;188&nbsp;989</a>{' '}
+          nebo <a href="tel:+420321672859">321&nbsp;672&nbsp;859</a>
+        </dd>
+        <dt>Žádost o&nbsp;informace (zákon 106/1999&nbsp;Sb.)</dt>
+        <dd>
+          Úřad musí odpovědět do 15&nbsp;dnů. Obec Hradešín: datová schránka <code>nswbwwa</code>. MěÚ Český Brod, vodoprávní úřad:
+          datová schránka <code>jgqbsve</code>.
+        </dd>
+      </dl>
+    </section>
+
+    <!-- ---------- Proč ---------- -->
+    <section class="list proc" aria-labelledby="h-proc" style="--r: -0.3deg">
+      <h2 id="h-proc">Proč v&nbsp;Hradešíně neteče voda</h2>
+      <svg
+        class="schema"
+        viewBox="0 0 400 452"
+        role="img"
+        aria-labelledby="schema-popis"
+      >
+        <title id="schema-popis">
+          Schéma: vrty v lese plní vodojem Hradešín. Z vodojemu teče voda do většiny Přišimas samospádem, do Hradešína ji
+          tlačí čerpadla. Při nízké hladině se čerpadla vypnou. Přivaděč z vodojemu Úvaly-jih zatím není v provozu.
+        </title>
+        <defs>
+          <marker id="sipka" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 10 5 0 10Z" fill="#0b5f9e" />
+          </marker>
+          <pattern id="kamen" width="8" height="8" patternUnits="userSpaceOnUse">
+            <rect width="8" height="8" fill="#e8dcc6" />
+            <circle cx="2" cy="2" r="0.9" fill="#c9b796" />
+            <circle cx="6" cy="6" r="0.9" fill="#c9b796" />
+          </pattern>
+        </defs>
+
+        <!-- Vrty v lese -->
+        <text x="14" y="18" class="s-nadpis">Vrty v lese</text>
+        <text x="14" y="34" class="s-text">sucho, vody ubývá</text>
+        <rect x="14" y="48" width="146" height="66" rx="3" fill="url(#kamen)" />
+        <rect x="14" y="98" width="146" height="16" rx="2" fill="#0b5f9e" />
+        <rect x="40" y="42" width="8" height="66" fill="#7d7f80" />
+        <rect x="83" y="42" width="8" height="66" fill="#7d7f80" />
+        <rect x="126" y="42" width="8" height="66" fill="#7d7f80" />
+
+        <!-- Vodojem Úvaly-jih -->
+        <text x="386" y="18" text-anchor="end" class="s-nadpis">Vodojem Úvaly-jih</text>
+        <rect x="286" y="44" width="100" height="58" rx="6" fill="#fffdf8" stroke="#7d7f80" stroke-width="2" />
+        <rect x="288" y="56" width="96" height="44" rx="4" fill="#5591c9" />
+
+        <!-- Přivaděč (zatím neteče) -->
+        <path d="M336 102V206H266" fill="none" stroke="#827f79" stroke-width="4" stroke-dasharray="7 6" />
+        <text x="326" y="130" text-anchor="end" class="s-text s-tucne">přivaděč z Úval</text>
+        <text x="326" y="146" text-anchor="end" class="s-text s-cervene">zatím neteče</text>
+
+        <!-- Vrty → vodojem -->
+        <path d="M87 114V206H128" fill="none" stroke="#0b5f9e" stroke-width="4" marker-end="url(#sipka)" />
+
+        <!-- Vodojem Hradešín -->
+        <text x="200" y="178" text-anchor="middle" class="s-nadpis">Vodojem Hradešín</text>
+        <rect x="136" y="190" width="128" height="84" rx="6" fill="#fffdf8" stroke="#1d1b18" stroke-width="2" />
+        <rect x="138" y="252" width="124" height="20" rx="4" fill="#0b5f9e" />
+        <line x1="138" y1="244" x2="262" y2="244" stroke="#c8281f" stroke-width="2" stroke-dasharray="5 4" />
+        <text x="200" y="236" text-anchor="middle" class="s-mala s-cervene">kritická mez</text>
+
+        <!-- Větev Hradešín: čerpadla -->
+        <path d="M168 274V306H132" fill="none" stroke="#0b5f9e" stroke-width="4" />
+        <path d="M108 306H76V340" fill="none" stroke="#827f79" stroke-width="4" stroke-dasharray="7 6" />
+        <circle cx="120" cy="306" r="13" fill="#fffdf8" stroke="#1d1b18" stroke-width="2" />
+        <path d="M114 300 127 306 114 312Z" fill="#1d1b18" />
+        <circle cx="131" cy="294" r="8" fill="#c8281f" />
+        <path d="M127.5 290.5l7 7m0-7-7 7" stroke="#fff" stroke-width="2" stroke-linecap="round" />
+        <text x="120" y="336" text-anchor="middle" class="s-mala">čerpadla</text>
+
+        <!-- Větev Přišimasy: samospád -->
+        <path d="M232 274V306H324V334" fill="none" stroke="#0b5f9e" stroke-width="4" marker-end="url(#sipka)" />
+        <text x="278" y="298" text-anchor="middle" class="s-mala">samospád</text>
+
+        <!-- Domy -->
+        <g transform="translate(46 344)">
+          <path d="M0 22 30 0 60 22" fill="none" stroke="#1d1b18" stroke-width="2.4" stroke-linejoin="round" />
+          <rect x="8" y="20" width="44" height="30" fill="#fffdf8" stroke="#1d1b18" stroke-width="2.4" />
+          <rect x="24" y="32" width="12" height="18" fill="#1d1b18" />
+        </g>
+        <g transform="translate(294 344)">
+          <path d="M0 22 30 0 60 22" fill="none" stroke="#1d1b18" stroke-width="2.4" stroke-linejoin="round" />
+          <rect x="8" y="20" width="44" height="30" fill="#fffdf8" stroke="#1d1b18" stroke-width="2.4" />
+          <rect x="24" y="32" width="12" height="18" fill="#1d1b18" />
+        </g>
+
+        <text x="76" y="414" text-anchor="middle" class="s-nadpis">HRADEŠÍN</text>
+        <text x="76" y="432" text-anchor="middle" class="s-text s-cervene">✕ čerpadla vypnutá</text>
+        <text x="76" y="448" text-anchor="middle" class="s-text">při nízké hladině</text>
+        <text x="324" y="414" text-anchor="middle" class="s-nadpis">PŘIŠIMASY</text>
+        <text x="324" y="432" text-anchor="middle" class="s-text s-modre">✓ voda teče</text>
+        <text x="324" y="448" text-anchor="middle" class="s-text">samospádem</text>
+      </svg>
+
+      <ol class="body">
+        <li>
+          <strong>Ve vrtech dochází voda.</strong> Je sucho, vody ve vrtech ubývá a&nbsp;do vodojemu natéká pomaleji,
+          než domácnosti spotřebují (obec Hradešín, 24.&nbsp;10. a&nbsp;8.&nbsp;11.).
+        </li>
+        <li>
+          <strong>Do Hradešína vodu tlačí čerpadla.</strong> Když hladina ve vodojemu klesne pod kritickou mez,
+          čerpadla se musí vypnout, aby se nepoškodila. Voda pak neteče, dokud se vodojem znovu nenaplní.
+        </li>
+        <li>
+          <strong>Přišimasy odstavit nejde.</strong> Většina obce má vodu samospádem. Kdyby se dodávka zastavila,
+          potrubí by se vyprázdnilo a&nbsp;zavzdušnilo. Na jeho proplach by bylo potřeba hodně vody, která teď chybí,
+          a&nbsp;zásobování by zkolabovalo v&nbsp;obou obcích (Stavokomplet, 3.&nbsp;11.).
+        </li>
+      </ol>
+    </section>
+
+    <!-- ---------- Kalendář ---------- -->
+    <section class="list kalendar" aria-labelledby="h-kal" style="--r: 0.5deg">
+      <h2 id="h-kal">Kalendář výpadků</h2>
+      <p class="hlavni-vyrok">
+        <strong>{dnuBezVody} z {sledovane.length} dní</strong> byl Hradešín aspoň část dne bez vody.
+      </p>
+      <div class="kal" role="group" aria-label="Dny od 16. října do 9. listopadu 2026">
+        <div class="kal-mesice" aria-hidden="true"><span>říjen</span><span>→ listopad 2026</span></div>
+        {['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'].map((d) => <span class="kal-den-tydne" aria-hidden="true">{d}</span>)}
+        {
+          bunky.map((d) =>
+            d === null ? (
+              <span class="den prazdny" aria-hidden="true" />
+            ) : (
+              <button
+                type="button"
+                class:list={['den', d.stav, { vybrany: d === vychozi, prvni: den(d.datum).getUTCDate() === 1 }]}
+                data-kdy={`${NAZVY_DNU[den(d.datum).getUTCDay()]} ${kratce(d.datum)}`}
+                data-stav={STAV_TEXT[d.stav]}
+                data-pozn={d.pozn ?? ''}
+                aria-label={`${NAZVY_DNU[den(d.datum).getUTCDay()]} ${kratce(d.datum)}: ${STAV_TEXT[d.stav]}. ${d.pozn ?? ''}`}
+              >
+                <span class="den-cislo">{den(d.datum).getUTCDate()}</span>
+                {d.stav === 'vypadek' && <span class="den-znak" aria-hidden="true">✕</span>}
+                {d.stav === 'nevime' && <span class="den-znak" aria-hidden="true">?</span>}
+              </button>
+            ),
+          )
+        }
+      </div>
+      <p class="kal-detail" id="kal-detail" aria-live="polite">
+        <strong>{popisDne(vychozi)}</strong>{' '}<span>{vychozi.pozn}</span>
+      </p>
+      <ul class="legenda">
+        <li><span class="vzorek vypadek" aria-hidden="true">✕</span> bez vody aspoň část dne</li>
+        <li><span class="vzorek ok" aria-hidden="true"></span> výpadek nebyl hlášen</li>
+        <li><span class="vzorek nevime" aria-hidden="true">?</span> zatím nevíme</li>
+      </ul>
+      <p class="poznamka">Podle oznámení obce. Klepnutím na den zobrazíte podrobnosti.</p>
+    </section>
+
+    <!-- ---------- Zdroje ---------- -->
+    <section class="list zdroje" aria-labelledby="h-zdroje" style="--r: -0.2deg">
+      <h2 id="h-zdroje">Odkud to víme</h2>
+      <p>
+        Neoficiální přehled k&nbsp;{aktualizovano}, sestavený jen z&nbsp;oznámení obcí Hradešín a&nbsp;Přišimasy a&nbsp;vyjádření
+        provozovatele Stavokomplet. Závazné jsou vždy informace obce a&nbsp;provozovatele.
+      </p>
+      <ul>
+        {ZDROJE.map((z) => <li><a href={z.url} rel="noopener">{z.nazev}</a></li>)}
+      </ul>
+    </section>
+  </main>
+
+  <footer class="pata">
+    <a href={home}><span aria-hidden="true">←</span> Zpět na otázku dne: Teče voda v&nbsp;Hradešíně?</a>
+  </footer>
+</Layout>
+
+<script>
+  // Kalendář: najetí, fokus nebo klepnutí na den ukáže jeho poznámku pod mřížkou.
+  const detail = document.getElementById('kal-detail');
+  const dny = document.querySelectorAll<HTMLButtonElement>('.kal .den[data-kdy]');
+
+  function ukaz(b: HTMLButtonElement) {
+    if (!detail) return;
+    dny.forEach((d) => d.classList.toggle('vybrany', d === b));
+    const silne = document.createElement('strong');
+    silne.textContent = b.dataset.kdy ?? '';
+    const text = document.createElement('span');
+    text.textContent = b.dataset.pozn || `${b.dataset.stav?.replace(/^./, (c) => c.toUpperCase())}.`;
+    detail.replaceChildren(silne, ' ', text);
+  }
+
+  dny.forEach((b) => {
+    b.addEventListener('click', () => ukaz(b));
+    b.addEventListener('focus', () => ukaz(b));
+    b.addEventListener('mouseenter', () => ukaz(b));
+  });
+</script>
+
+<style>
+  /*
+   * Přehled jako další listy připíchnuté na stejnou nástěnku (modrou / korkovou).
+   * Grafy jsou na papíře, takže barvy dat platí pro jeden povrch #f7f3ea:
+   *   voda / teď  #0b5f9e   dřív  #5591c9   bez vody  #c8281f  (ověřeno validátorem)
+   * Každá značka má proti papíru aspoň 3 : 1, text aspoň 4,5 : 1. Na nástěnce
+   * (korek se zrnem) leží jen velký nadpis, ostatní text je na papírových štítcích.
+   * Stav nikdy jen barvou: výpadek má ✕, krok přivaděče má i slovo.
+   */
+  .hlava,
+  .deska,
+  .pata {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+
+  .hlava {
+    padding-top: max(18px, env(safe-area-inset-top));
+    padding-bottom: 26px;
+  }
+
+  /* Drobný text na nástěnce by na korku se zrnem nebyl čitelný: papírové štítky. */
+  .zpet,
+  .podtitul,
+  .pata a {
+    color: var(--paper-ink);
+    background: var(--paper);
+    box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.5);
+  }
+
+  .zpet {
+    display: inline-block;
+    padding: 10px 12px;
+    font-size: 0.8125rem;
+    rotate: -0.8deg;
+  }
+
+  h1 {
+    margin: 6px 0 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.6rem, 11vw, 5.5rem);
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+
+  .podtitul {
+    display: inline-block;
+    margin: 14px 0 0;
+    max-width: 40ch;
+    padding: 6px 12px;
+    font-size: clamp(0.9375rem, 2.6vw, 1.125rem);
+    rotate: 0.5deg;
+  }
+
+  .deska {
+    display: grid;
+    gap: 26px;
+    grid-template-columns: minmax(0, 1fr);
+    padding-bottom: 10px;
+  }
+
+  /* ---------- List papíru se špendlíkem ---------- */
+
+  .list {
+    --r: 0deg;
+    --muted-paper: rgba(29, 27, 24, 0.7);
+    position: relative;
+    min-width: 0;
+    padding: 34px 18px 22px;
+    color: var(--paper-ink);
+    background: var(--paper);
+    rotate: var(--r);
+    box-shadow:
+      0 1px 1px rgba(0, 0, 0, 0.08),
+      0 18px 34px -18px rgba(0, 0, 0, 0.55);
+  }
+
+  .list::before {
+    content: '';
+    position: absolute;
+    top: 11px;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin-left: -8px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff9b8f 0 16%, #e23a2b 46%, #9c170c 100%);
+    box-shadow: 2px 4px 4px rgba(0, 0, 0, 0.35);
+  }
+
+  h2 {
+    margin: 0 0 14px;
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 6vw, 2.1rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+
+  h3 {
+    margin: 0 0 10px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  /* Globálně a s nízkou specifičností, ať mezery jednotlivých odstavců vyhrají. */
+  :global(.list :where(p)) {
+    margin: 0;
+  }
+
+  .cislo {
+    font-family: var(--font-display);
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .poznamka {
+    margin-top: 10px;
+    font-size: 0.6875rem;
+    line-height: 1.4;
+    color: var(--muted-paper);
+  }
+
+  /* ---------- Teď: dvě dlaždice a cisterny s mapou ---------- */
+
+  .dlazdice {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 14px;
+  }
+
+  .dlazdice > div {
+    padding-top: 10px;
+    border-top: 2px solid var(--paper-ink);
+  }
+
+  .ikona {
+    display: block;
+    width: 28px;
+    height: 28px;
+    margin-bottom: 6px;
+    color: var(--paper-ink);
+  }
+
+  .stitek-dl {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted-paper);
+  }
+
+  .dlazdice .cislo {
+    margin-top: 4px;
+    font-size: clamp(2.2rem, 9vw, 3.4rem);
+  }
+
+  .pod {
+    margin-top: 4px;
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
+  .dlazdice > .cisterny {
+    grid-column: 1 / -1;
+  }
+
+  .mista {
+    display: grid;
+    gap: 8px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .misto {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 8px 12px;
+    color: var(--paper-ink);
+    text-decoration: none;
+    background: #fffdf8;
+    border: 2px solid var(--paper-ink);
+    border-radius: 6px;
+    box-shadow: 0 2px 0 var(--paper-ink);
+    transition: translate 0.12s, box-shadow 0.12s;
+  }
+
+  .misto:hover {
+    translate: 0 -1px;
+    box-shadow: 0 3px 0 var(--paper-ink);
+  }
+
+  .misto:active {
+    translate: 0 2px;
+    box-shadow: 0 0 0 var(--paper-ink);
+  }
+
+  .pin {
+    flex: none;
+    width: 22px;
+    height: 22px;
+  }
+
+  .misto-text {
+    display: grid;
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .misto-text strong {
+    font-size: 0.875rem;
+  }
+
+  .misto-mapa {
+    margin-left: auto;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+  }
+
+  .zive {
+    margin-top: 24px;
+    font-size: 0.8125rem;
+  }
+
+  .mini-razitko {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 0.25em;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--stamp);
+    border: 2px solid currentColor;
+    border-radius: 3px;
+    rotate: -6deg;
+    vertical-align: -0.15em;
+  }
+
+  /* ---------- Kalendář ---------- */
+
+  .hlavni-vyrok {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+  }
+
+  .hlavni-vyrok strong {
+    font-family: var(--font-display);
+    font-size: 1.6em;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .kal {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+    margin-top: 16px;
+  }
+
+  .kal-mesice {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted-paper);
+  }
+
+  .kal-den-tydne {
+    font-size: 0.6875rem;
+    text-align: center;
+    color: var(--muted-paper);
+  }
+
+  .den {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    min-width: 0;
+    padding: 0;
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--paper-ink);
+    background: #dde8ef;
+    border: 0;
+    border-radius: 3px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Okraj, ať je políčko vidět i proti papíru (≥ 3 : 1). */
+  .den.ok {
+    border: 1.5px solid #758c9c;
+  }
+
+  .den.prazdny {
+    background: none;
+    cursor: default;
+  }
+
+  .den.vypadek {
+    color: #fff;
+    background: #c8281f;
+  }
+
+  .den.nevime {
+    background: none;
+    outline: 2px dashed rgba(29, 27, 24, 0.6);
+    outline-offset: -2px;
+  }
+
+  .den-znak {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 0.625rem;
+    line-height: 1;
+  }
+
+  /* 1. listopadu: hranice měsíců jako čára vlevo. */
+  .den.prvni {
+    box-shadow: -3px 0 0 -1px var(--paper), -4px 0 0 0 var(--paper-ink);
+  }
+
+  .den.vybrany {
+    box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--paper-ink);
+    z-index: 1;
+  }
+
+  .den:focus-visible {
+    outline: 2px solid var(--paper-ink);
+    outline-offset: 2px;
+  }
+
+  .kal-detail {
+    min-height: 3.2em;
+    margin-top: 14px;
+    padding: 8px 10px;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    background: rgba(29, 27, 24, 0.05);
+    border-left: 3px solid var(--paper-ink);
+  }
+
+  .legenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.75rem;
+  }
+
+  .legenda li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .vzorek {
+    display: inline-grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    font-size: 0.5625rem;
+    font-weight: 700;
+    border-radius: 2px;
+  }
+
+  .vzorek.vypadek {
+    color: #fff;
+    background: #c8281f;
+  }
+
+  .vzorek.ok {
+    background: #dde8ef;
+    border: 1.5px solid #758c9c;
+  }
+
+  .vzorek.nevime {
+    outline: 1.5px dashed rgba(29, 27, 24, 0.6);
+    outline-offset: -1.5px;
+  }
+
+  /* ---------- Schéma ---------- */
+
+  .schema {
+    display: block;
+    width: 100%;
+    max-width: 440px;
+    height: auto;
+    margin: 0 auto;
+    font-family: var(--font-text);
+  }
+
+  .s-nadpis {
+    font-size: 14px;
+    font-weight: 700;
+    fill: #1d1b18;
+  }
+
+  .s-text {
+    font-size: 12px;
+    fill: #1d1b18;
+  }
+
+  .s-mala {
+    font-size: 11px;
+    fill: #1d1b18;
+  }
+
+  .s-tucne {
+    font-weight: 700;
+  }
+
+  .s-cervene {
+    fill: #c8281f;
+    font-weight: 700;
+  }
+
+  .s-modre {
+    fill: #0b5f9e;
+    font-weight: 700;
+  }
+
+  .body {
+    display: grid;
+    gap: 10px;
+    margin: 18px 0 0;
+    padding-left: 1.4em;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+
+  .body li::marker {
+    font-family: var(--font-display);
+    font-weight: 800;
+  }
+
+  /* ---------- Přivaděč: kroky ---------- */
+
+  .kroky {
+    --znak: 28px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+  }
+
+  /* Mobil: svisle, čára vede mezi kolečky vlevo. */
+  .krok {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--znak) 1fr;
+    column-gap: 12px;
+    padding-bottom: 14px;
+  }
+
+  .krok::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--znak) / 2 - 1.5px);
+    top: var(--znak);
+    bottom: 0;
+    width: 3px;
+    background: #0b5f9e;
+  }
+
+  /* Kde se ještě pracuje, je čára přerušovaná. */
+  .krok.ceka::before,
+  .krok.probiha::before,
+  .krok.hotovo:has(+ .probiha)::before {
+    background: repeating-linear-gradient(to bottom, #827f79 0 5px, transparent 5px 9px);
+  }
+
+  .krok:last-child::before {
+    display: none;
+  }
+
+  .krok-znak {
+    grid-row: 1 / span 3;
+    display: grid;
+    place-items: center;
+    width: var(--znak);
+    height: var(--znak);
+    border-radius: 50%;
+    background: #0b5f9e;
+  }
+
+  .krok-znak svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .krok.probiha .krok-znak {
+    background: #fffdf8;
+    box-shadow: inset 0 0 0 2.5px #0b5f9e;
+  }
+
+  .krok.ceka .krok-znak {
+    background: none;
+    box-shadow: inset 0 0 0 2px #827f79;
+  }
+
+  .krok-stav {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-paper);
+  }
+
+  .krok.hotovo .krok-stav {
+    color: #0b5f9e;
+  }
+
+  .krok-co {
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .krok-kdy {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: var(--muted-paper);
+  }
+
+  .privadec-dole {
+    display: grid;
+    gap: 26px;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px dashed rgba(29, 27, 24, 0.3);
+  }
+
+  .kdy p + p {
+    margin-top: 10px;
+  }
+
+  .kdy p {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+
+  /* ---------- Co dělat, kontakty, zdroje ---------- */
+
+  .seznam {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+
+  .seznam li {
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+
+  .odrazka {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--paper);
+    background: var(--paper-ink);
+    border-radius: 50%;
+  }
+
+  .kontakty dl {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+
+  .kontakty dt {
+    font-weight: 700;
+  }
+
+  .kontakty dt + dd {
+    margin: 2px 0 14px;
+  }
+
+  .kontakty dd:last-child {
+    margin-bottom: 0;
+  }
+
+  code {
+    font-family: inherit;
+    font-weight: 700;
+    padding: 0 3px;
+    background: rgba(29, 27, 24, 0.07);
+  }
+
+  .zdroje p {
+    font-size: 0.75rem;
+    line-height: 1.45;
+  }
+
+  .zdroje ul {
+    margin: 12px 0 0;
+    padding-left: 1.2em;
+    display: grid;
+    gap: 6px;
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .zdroje a {
+    overflow-wrap: anywhere;
+  }
+
+  .pata {
+    padding-top: 30px;
+    padding-bottom: max(30px, calc(env(safe-area-inset-bottom) + 18px));
+    text-align: center;
+    font-size: 0.8125rem;
+  }
+
+  .pata a {
+    display: inline-block;
+    padding: 10px 12px;
+    rotate: 0.6deg;
+  }
+
+  /* Rámeček fokusu na papíře tmavý (globální je v barvě nástěnky, při ANO bílý). */
+  .list :focus-visible {
+    outline-color: var(--paper-ink);
+  }
+
+  /* ---------- Širší obrazovky ---------- */
+
+  @media (min-width: 640px) {
+    .list {
+      padding: 38px 28px 26px;
+    }
+
+    .dlazdice {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.7fr);
+    }
+
+    .dlazdice > .cisterny {
+      grid-column: auto;
+    }
+
+    .privadec-dole {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 34px;
+    }
+  }
+
+  @media (min-width: 960px) {
+    .hlava {
+      padding-top: 30px;
+      padding-bottom: 34px;
+    }
+
+    .deska {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 34px 30px;
+      align-items: start;
+    }
+
+    .ted { grid-column: 1 / -1; }
+    .kalendar { grid-column: span 5; }
+    .proc { grid-column: span 7; }
+    .privadec { grid-column: 1 / -1; }
+    .delat { grid-column: span 7; }
+    .kontakty { grid-column: span 5; }
+    .zdroje { grid-column: 1 / -1; }
+
+    /* Kroky přivaděče vodorovně: čára vede od kolečka ke kolečku. */
+    .kroky {
+      grid-template-columns: repeat(var(--kroku), minmax(0, 1fr));
+      column-gap: 12px;
+    }
+
+    .krok {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
+      align-content: start;
+      row-gap: 3px;
+      padding-bottom: 0;
+    }
+
+    .krok-znak {
+      grid-row: auto;
+      margin-bottom: 8px;
+    }
+
+    .krok::before {
+      left: var(--znak);
+      right: -12px;
+      top: calc(var(--znak) / 2 - 1.5px);
+      bottom: auto;
+      width: auto;
+      height: 3px;
+    }
+
+    .krok.ceka::before,
+    .krok.probiha::before,
+    .krok.hotovo:has(+ .probiha)::before {
+      background: repeating-linear-gradient(to right, #827f79 0 5px, transparent 5px 9px);
+    }
+  }
+</style>

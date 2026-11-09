@@ -65,7 +65,7 @@ při každé změně stavu a jednou denně.
 ## Vzhled
 
 Úřední deska: uprostřed připíchnutý list s otázkou a razítkem ANO/NE, kolem nahodile
-připíchnuté fotky (GIFy, `GIF_SLOTS` = 10). Vpravo vede trubka s mosazným kohoutkem
+připíchnuté fotky (GIFy, `GIF_SLOTS` = 10, na desktopu je vidět 8, dvě místa zabírá karta s přehledem). Vpravo vede trubka s mosazným kohoutkem
 a kýblem (kreslené SVG + CSS): při NE z něj jen kape, při ANO teče proudem.
 Při ANO je nástěnka „zatopená“ modrou, při NE vyschlý korek.
 Klik na fotku ji přepíchne s jiným zvířetem, klik na razítko bouchne znovu, klik na
@@ -76,6 +76,24 @@ Písma z Google Fonts (OFL), uložená v `public/fonts/` a ořezaná na latinku 
 
 - **Big Shoulders** – razítko ANO/NE
 - **Martian Mono** – text „psaný na stroji“
+
+## Přehled situace (`/prehled/`)
+
+Infografická stránka „Voda v Hradešíně“: proč neteče, kdy poteče přivaděč z Úval a co
+dělat. Vede na ni karta „Přehled situace“ na hlavní stránce (desktop: vpravo nahoře místo
+dvou fotek, mobil: hned pod listem s razítkem). Listy na stejné nástěnce:
+
+1. **Jak to vypadá teď**: poslední ohlášená dodávka, další dodávka, kde stojí cisterny (odkazy na mapu, `MISTA`)
+2. **Přivaděč z Úval**: kroky hotovo / probíhá / čeká, kdy poteče, co přinese
+3. **Co dělat** a **na koho se obrátit**
+4. **Proč Hradešínu neteče** (schéma vodovodu) a **kalendář výpadků** od 16. 10.
+5. **Odkud to víme**: odkazy na oznámení obcí
+
+Všechen obsah je v `src/data/prehled.ts`. Při aktualizaci přepište `AKTUALIZOVANO`,
+doplňte dny do `KALENDAR` a posuňte kroky v `PRIVADEC`. Jen ověřené údaje: oznámení obcí
+a provozovatele, žádné odhady z diskuzí. Barvy jsou ověřené pro papír `#f7f3ea`:
+modrá `#0b5f9e`, světle modrá `#5591c9`, červená `#c8281f` (značky aspoň 3 : 1, text 4,5 : 1). Stav nikdy neukazuje jen barva,
+vždy i ✕ nebo slovo.
 
 ## Sdílení, ikony, SEO
 

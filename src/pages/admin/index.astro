@@ -275,7 +275,8 @@ const vault = await getVault();
   .admin {
     --ink: var(--paper-ink);
     --muted: rgba(29, 27, 24, 0.72);
-    --line: rgba(29, 27, 24, 0.35);
+    /* Obrys pole pro heslo aspoň 3 : 1 proti bílé. */
+    --line: rgba(29, 27, 24, 0.6);
     --tile: #ffffff;
     --answer: var(--stamp);
     position: relative;

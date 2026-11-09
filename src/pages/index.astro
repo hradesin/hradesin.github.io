@@ -3,10 +3,16 @@ import Layout from '../layouts/Layout.astro';
 import status from '../data/status.json';
 import { getGifPools } from '../lib/gifs';
 import { GIF_SLOTS, UMAMI } from '../config';
+import { AKTUALIZOVANO, PRIVADEC } from '../data/prehled';
 
 const pools = await getGifPools();
 const stav = status.tece ? 'ano' : 'ne';
 const slots = Array.from({ length: GIF_SLOTS }, (_, i) => i + 1);
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+// Karta s odkazem na přehled: kolik kroků přivaděče je hotovo a ke kdy.
+const krokuHotovo = PRIVADEC.filter((k) => k.stav === 'hotovo').length;
+const [, mesic, den] = AKTUALIZOVANO.split('-').map(Number);
+const stavK = `${den}. ${mesic}.`;
 const title = status.tece ? 'ANO, voda v Hradešíně teče' : 'NE, voda v Hradešíně neteče';
 const description = `Teče v Hradešíně voda? ${status.tece ? 'Ano, teď teče.' : 'Ne, teď neteče.'} Aktuální stav na jednom místě, k tomu zvířátka z GIPHY.`;
 
@@ -62,6 +68,32 @@ const data = JSON.stringify({
         Kolik tu dnes bylo Hradešíňáků? <strong id="present-n">1</strong>
       </p>
     </section>
+
+    <!-- Karta s odkazem na přehled: na desktopu místo dvou fotek vpravo nahoře, na mobilu pod listem. -->
+    <a class="karta" href={`${base}prehled/`}>
+      <span class="karta-pin" aria-hidden="true"></span>
+      <span class="karta-obsah">
+        <span class="karta-stitek">Přehled situace · stav k&nbsp;{stavK}</span>
+        <span class="karta-titulek">
+          <span class="jen-ne">Proč neteče a&nbsp;kdy poteče?</span>
+          <span class="jen-ano">Jak je to s&nbsp;vodou a&nbsp;přivaděčem?</span>
+        </span>
+        <span class="karta-radek">
+          <span class="tecky" aria-hidden="true">{PRIVADEC.map((k) => <i class={k.stav} />)}</span>
+          <span>Přivaděč: <strong>{krokuHotovo} ze {PRIVADEC.length}</strong> kroků hotovo</span>
+        </span>
+        <span class="karta-radek karta-cisterny">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <rect x="3" y="10" width="18" height="11" rx="5" fill="none" stroke="currentColor" stroke-width="2.4" />
+            <path d="M21 13h4l3 4v4h-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" />
+            <circle cx="9" cy="24" r="2.8" fill="currentColor" />
+            <circle cx="24" cy="24" r="2.8" fill="currentColor" />
+          </svg>
+          <span>Cisterny u&nbsp;úřadu a&nbsp;u&nbsp;hřbitova, s&nbsp;mapou</span>
+        </span>
+        <span class="karta-cta">Otevřít přehled <span class="sipka" aria-hidden="true">→</span></span>
+      </span>
+    </a>
 
     <!-- Kohoutek na trubce: při NE z něj jen kape, při ANO teče. Kreslený, ne GIF. -->
     <button type="button" class="kohoutek" id="kohoutek" aria-label="Otočit kohoutkem">
@@ -621,12 +653,12 @@ const data = JSON.stringify({
    * s odpovědí), náhodu dodává natočení, posun a velikost každé fotky.
    *
    * Desktop (≥ 960 px), celé na jednu obrazovku, vpravo trubka s kohoutkem:
-   *   [ 1][ 2][ 3][ 4]  ║
-   *   [ 5][ list A4   ] ╠╕
-   *   [ 6][ na šířku  ]  ·
-   *   [ 7][ 8][ 9][10]  ▽
-   * Mobil: 3 fotky, list přes celou šířku, pod ním 4 fotky s kohoutkem
-   * vpravo (trubka vede zpoza listu) a nakonec 3 fotky.
+   *   [ 1][ 2][ přehled ]  ║
+   *   [ 3][ list A4     ] ╠╕
+   *   [ 4][ na šířku    ]  ·
+   *   [ 5][ 6][ 7][ 8]     ▽
+   * Mobil: 3 fotky, list přes celou šířku, pod ním karta s odkazem na přehled,
+   * 4 fotky s kohoutkem vpravo (trubka vede zpoza karty) a nakonec 3 fotky.
    */
   .board {
     width: min(1320px, 100%);
@@ -753,6 +785,147 @@ const data = JSON.stringify({
     vertical-align: -0.14em;
     color: var(--stamp);
     transition: color 0.6s ease;
+  }
+
+  /* ---------- Karta s odkazem na přehled ---------- */
+
+  /* Kartička připíchnutá vedle fotek: celá je odkaz, pod myší se zvedne. */
+  .karta {
+    position: relative;
+    z-index: 3;
+    grid-column: 1 / -1;
+    order: 1;
+    display: block;
+    margin: -4px 4px 10px;
+    padding: 32px 18px 18px;
+    color: var(--paper-ink);
+    text-decoration: none;
+    background: var(--paper);
+    rotate: 0.8deg;
+    box-shadow:
+      0 1px 1px rgba(0, 0, 0, 0.08),
+      0 18px 30px -16px rgba(0, 0, 0, 0.6);
+    transition:
+      translate 0.2s ease,
+      box-shadow 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .karta-pin {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin-left: -8px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #9fc7f0 0 16%, #1f6fbf 46%, #0b3d73 100%);
+    box-shadow: 2px 4px 4px rgba(0, 0, 0, 0.35);
+  }
+
+  .karta-obsah {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+  }
+
+  .karta-stitek {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(29, 27, 24, 0.72);
+  }
+
+  .karta-titulek {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 0.95;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+
+  :global(body[data-stav='ano']) .karta .jen-ne,
+  :global(body[data-stav='ne']) .karta .jen-ano {
+    display: none;
+  }
+
+  .karta-radek {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8125rem;
+    line-height: 1.25;
+  }
+
+  /* Kroky přivaděče v malém: plné = hotovo, kroužek s tečkou = probíhá, prázdný = čeká. */
+  .tecky {
+    display: inline-flex;
+    flex: none;
+    gap: 3px;
+  }
+
+  .tecky i {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    box-sizing: border-box;
+  }
+
+  .tecky .hotovo {
+    background: #0b5f9e;
+  }
+
+  .tecky .probiha {
+    border: 2px solid #0b5f9e;
+    background: radial-gradient(circle, #0b5f9e 0 30%, transparent 34%);
+  }
+
+  .tecky .ceka {
+    border: 2px solid #827f79;
+  }
+
+  .karta-cisterny svg {
+    flex: none;
+    width: 22px;
+    height: 22px;
+  }
+
+  .karta-cta {
+    align-self: flex-start;
+    margin-top: auto;
+    padding: 0.5em 0.95em;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--paper);
+    background: var(--paper-ink);
+    border-radius: 999px;
+  }
+
+  .sipka {
+    display: inline-block;
+    transition: translate 0.2s ease;
+  }
+
+  @media (hover: hover) {
+    .karta:hover {
+      translate: 0 -3px;
+      box-shadow:
+        0 1px 1px rgba(0, 0, 0, 0.08),
+        0 26px 36px -16px rgba(0, 0, 0, 0.65);
+    }
+
+    .karta:hover .sipka {
+      translate: 4px 0;
+    }
+  }
+
+  .karta:focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 4px;
   }
 
   /* ---------- Fotky ---------- */
@@ -1249,9 +1422,11 @@ const data = JSON.stringify({
     min-height: 44px;
     padding: 0 12px;
     font: inherit;
-    color: var(--ink);
-    background: none;
+    /* Papírový štítek jako GIPHY: na korku se zrnem by holý text nebyl čitelný. */
+    color: var(--paper-ink);
+    background: var(--paper);
     border: 0;
+    box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.5);
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
@@ -1310,10 +1485,10 @@ const data = JSON.stringify({
       gap: 18px;
       grid-template-columns: repeat(5, minmax(0, 1fr));
       grid-template-areas:
-        't1 t2 t3 t4 tap'
-        't5 hero hero hero tap'
-        't6 hero hero hero tap'
-        't7 t8 t9 t10 tap';
+        't1 t2 karta karta tap'
+        't3 hero hero hero tap'
+        't4 hero hero hero tap'
+        't5 t6 t7 t8 tap';
     }
 
     .kohoutek {
@@ -1355,6 +1530,61 @@ const data = JSON.stringify({
       font-size: min(3.1cqw, 4.6cqh, 1.25rem);
     }
 
+    /* Karta zabírá dvě políčka vpravo nahoře, velikost písma podle její výšky. */
+    .karta {
+      grid-area: karta;
+      align-self: stretch;
+      margin: 0;
+      padding: 0;
+      rotate: 1.4deg;
+      container-type: size;
+    }
+
+    /* Špendlík vpravo, ať na nízké kartě nezakryje štítek. */
+    .karta-pin {
+      left: auto;
+      right: 12%;
+    }
+
+    .karta-obsah {
+      gap: 3.6cqh;
+      padding: 12cqh 6cqw 7cqh;
+    }
+
+    .karta-stitek {
+      font-size: min(5.2cqh, 2.8cqw, 0.75rem);
+    }
+
+    .karta-titulek {
+      font-size: min(16cqh, 8.8cqw);
+    }
+
+    .karta-radek {
+      gap: 2cqw;
+      font-size: min(5.8cqh, 3cqw, 0.875rem);
+    }
+
+    .tecky i {
+      width: min(5.4cqh, 13px);
+      height: min(5.4cqh, 13px);
+    }
+
+    .karta-cisterny svg {
+      width: min(9cqh, 22px);
+      height: min(9cqh, 22px);
+    }
+
+    .karta-cta {
+      font-size: min(6.2cqh, 3.2cqw, 0.9375rem);
+    }
+
+    /* Na nízké kartě se nevejde všechno: cisterny jsou až v přehledu. */
+    @container (max-height: 140px) {
+      .karta-cisterny {
+        display: none;
+      }
+    }
+
     .p1 { grid-area: t1; }
     .p2 { grid-area: t2; }
     .p3 { grid-area: t3; }
@@ -1363,7 +1593,11 @@ const data = JSON.stringify({
     .p6 { grid-area: t6; }
     .p7 { grid-area: t7; }
     .p8 { grid-area: t8; }
-    .p9 { grid-area: t9; }
-    .p10 { grid-area: t10; }
+
+    /* Dvě fotky ustoupily kartě (skryté se ani nestahují). */
+    .p9,
+    .p10 {
+      display: none;
+    }
   }
 </style>
