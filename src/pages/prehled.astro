@@ -73,8 +73,8 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
             <path d="M16 9v7l5 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
           <p class="stitek-dl">Poslední ohlášená dodávka</p>
-          <p class="cislo">18–20&nbsp;h</p>
-          <p class="pod">v&nbsp;neděli 8.&nbsp;11.</p>
+          <p class="cislo">od 19&nbsp;h</p>
+          <p class="pod">v&nbsp;pondělí 9.&nbsp;11., asi přes hodinu, dokud se čerpadla sama nevypnou</p>
         </div>
         <div>
           <svg class="ikona" viewBox="0 0 32 32" aria-hidden="true">
@@ -84,7 +84,7 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
           </svg>
           <p class="stitek-dl">Další dodávka</p>
           <p class="cislo">?</p>
-          <p class="pod">obec ji zatím neohlásila</p>
+          <p class="pod">pravidelný čas domluvit nejde, některý den voda nepoteče vůbec (Stavokomplet, 9.&nbsp;11.)</p>
         </div>
         <div class="cisterny">
           <svg class="ikona" viewBox="0 0 32 32" aria-hidden="true">
@@ -94,12 +94,12 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
             <circle cx="24" cy="24" r="2.6" fill="currentColor" />
           </svg>
           <p class="stitek-dl">Cisterny s&nbsp;pitnou vodou</p>
-          <p class="pod">V obci stojí dvě, pravidelně je doplňuje Stavokomplet. Klepnutím otevřete mapu:</p>
+          <p class="pod"><strong>Podle obce (9.&nbsp;11.) jsou už uzamčené.</strong> Cisterna od úřadu je přemístěná k&nbsp;hlavní silnici. Klepnutím otevřete mapu:</p>
           <ul class="mista">
             <li>
-              <a class="misto" href={MISTA.urad} target="_blank" rel="noopener">
+              <a class="misto" href={MISTA.cp119} target="_blank" rel="noopener">
                 <svg class="pin" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Z" fill="currentColor" /><circle cx="12" cy="9" r="2.6" fill="#f7f3ea" /></svg>
-                <span class="misto-text"><strong>U&nbsp;obecního úřadu</strong> Hradešín 114</span>
+                <span class="misto-text"><strong>U&nbsp;hlavní silnice</strong> čp.&nbsp;119 (u&nbsp;Vítovských)</span>
                 <span class="misto-mapa">mapa <span aria-hidden="true">↗</span></span>
               </a>
             </li>
@@ -152,9 +152,13 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
           <h3>Kdy poteče voda z&nbsp;Úval?</h3>
           <p><strong>Oficiální termín zatím není.</strong></p>
           <p>
-            Ještě chybí výsledek rozboru vody, dokončení propojení s&nbsp;vodojemem a&nbsp;povolení k&nbsp;předčasnému
-            užívání. Teprve pak může do vodojemu Hradešín téct i&nbsp;voda z&nbsp;Úval (obec Hradešín, 29.&nbsp;10.
-            a&nbsp;6.&nbsp;11.).
+            První vzorky vody z&nbsp;přivaděče (3.&nbsp;11.) v&nbsp;rozboru nevyhověly. Další se odebraly 6.&nbsp;11.
+            a&nbsp;čeká se na výsledky (obec Hradešín, 9.&nbsp;11.).
+          </p>
+          <p>
+            Kromě vyhovujícího rozboru ještě chybí dokončení propojení s&nbsp;vodojemem a&nbsp;povolení
+            k&nbsp;předčasnému užívání. Teprve pak může do vodojemu Hradešín téct i&nbsp;voda z&nbsp;Úval (obec
+            Hradešín, 29.&nbsp;10. a&nbsp;6.&nbsp;11.).
           </p>
           <p>Podle původního harmonogramu měla voda v&nbsp;přivaděči být do konce října (obec Přišimasy, 20.&nbsp;9.).</p>
         </div>
@@ -184,7 +188,7 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
         </li>
         <li>
           <span class="odrazka" aria-hidden="true">2</span>
-          <span><strong>Cisterny s&nbsp;pitnou vodou</strong> stojí <a href={MISTA.urad} target="_blank" rel="noopener">u&nbsp;obecního úřadu</a> a&nbsp;<a href={MISTA.hrbitov} target="_blank" rel="noopener">u&nbsp;hřbitova</a> (odkazy otevřou mapu). Pravidelně je doplňuje provozovatel.</span>
+          <span><strong>Cisterny s&nbsp;pitnou vodou</strong> stojí <a href={MISTA.cp119} target="_blank" rel="noopener">u&nbsp;čp.&nbsp;119 u&nbsp;hlavní silnice</a> (přemístěná od úřadu) a&nbsp;<a href={MISTA.hrbitov} target="_blank" rel="noopener">u&nbsp;hřbitova</a> (odkazy otevřou mapu). Podle obce (9.&nbsp;11.) jsou už uzamčené.</span>
         </li>
         <li>
           <span class="odrazka" aria-hidden="true">3</span>
