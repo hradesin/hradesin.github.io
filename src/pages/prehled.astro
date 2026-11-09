@@ -7,6 +7,7 @@ import {
   DODAVKA,
   KALENDAR,
   MISTA,
+  ODBERY,
   PRIVADEC,
   ZDROJE,
 } from '../data/prehled';
@@ -20,6 +21,7 @@ const image = new URL(`og-${stav}.jpg?v=${version}`, new URL(home, Astro.site)).
 // Datum bez časových pásem: poledne UTC, čteme UTC části.
 const den = (iso: string) => new Date(`${iso}T12:00:00Z`);
 const kratce = (iso: string) => `${den(iso).getUTCDate()}. ${den(iso).getUTCMonth() + 1}.`;
+const ODBER_TEXT = { nevyhovel: 'nevyhověl', ceka: 'čeká se na výsledek', vyhovel: 'vyhověl' } as const;
 const V_DNU = ['v neděli', 'v pondělí', 'v úterý', 've středu', 've čtvrtek', 'v pátek', 'v sobotu'];
 const NAZVY_DNU = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
 const aktualizovano = `${kratce(AKTUALIZOVANO)} ${den(AKTUALIZOVANO).getUTCFullYear()}`;
@@ -132,7 +134,7 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
       <ol class="kroky" style={`--kroku: ${PRIVADEC.length}`}>
         {
           PRIVADEC.map((k) => (
-            <li class:list={['krok', k.stav]}>
+            <li class:list={['krok', k.stav, k.odkaz && 'klik']}>
               <span class="krok-znak" aria-hidden="true">
                 {k.stav === 'hotovo' && (
                   <svg viewBox="0 0 24 24">
@@ -146,10 +148,19 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
                 )}
               </span>
               <span class="krok-stav">{KROK_TEXT[k.stav]}</span>
-              <span class="krok-co">{k.co}</span>
+              {k.odkaz ? (
+                <a class="krok-co krok-odkaz" href={k.odkaz}>{k.co}</a>
+              ) : (
+                <span class="krok-co">{k.co}</span>
+              )}
               <span class="krok-kdy">
                 {k.pozor && <strong class="krok-pozor"><span aria-hidden="true">✕</span> {k.pozor}</strong>}
                 {k.kdy}
+                {k.odkaz && (
+                  <span class="krok-vic" aria-hidden="true">
+                    co to znamená <span class="sipka-dolu">↓</span>
+                  </span>
+                )}
               </span>
             </li>
           ))
@@ -170,7 +181,7 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
             k&nbsp;předčasnému užívání. Teprve pak může do vodojemu Hradešín téct i&nbsp;voda z&nbsp;Úval (obec
             Hradešín, 29.&nbsp;10. a&nbsp;6.&nbsp;11.).
           </p>
-          <p>Podle původního harmonogramu měla voda v&nbsp;přivaděči být do konce října (obec Přišimasy, 20.&nbsp;9.).</p>
+          <p><a href="#rozbor">Co znamená, že rozbor nevyhověl?</a></p>
         </div>
         <div class="kdy">
           <h3>Co přivaděč přinese</h3>
@@ -185,6 +196,81 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
           </p>
         </div>
       </div>
+    </section>
+
+    <!-- ---------- Rozbor vody z přivaděče ---------- -->
+    <section class="list rozbor" id="rozbor" aria-labelledby="h-rozbor" style="--r: -0.15deg">
+      <h2 id="h-rozbor">Rozbor vody z&nbsp;přivaděče</h2>
+      <p class="rozbor-uvod">
+        <strong>U&nbsp;nového potrubí se s&nbsp;tím počítá.</strong> Po stavbě v&nbsp;něm bývají nečistoty a&nbsp;voda v&nbsp;nových
+        trubkách stojí. Proto se proplachuje a&nbsp;vzorky se odebírají znovu, dokud nevyhoví.
+      </p>
+
+      <div class="cesta">
+        {
+          ODBERY.map((o, i) => (
+            <Fragment>
+              {i > 0 && <div class="spoj"><span>proplach</span></div>}
+              <div class:list={['uzel', o.stav]}>
+                {o.stav === 'ceka' && <span class="uzel-ted">teď</span>}
+                <span class="uzel-znak" aria-hidden="true">
+                  {o.stav === 'nevyhovel' && '✕'}
+                  {o.stav === 'vyhovel' && '✓'}
+                  {o.stav === 'ceka' && (
+                    <svg viewBox="0 0 24 24">
+                      <path d="M7 4h10M7 20h10M8 4c0 5 8 5 8 8s-8 3-8 8M16 4c0 5-8 5-8 8s8 3 8 8" fill="none" stroke="#0b5f9e" stroke-width="1.8" stroke-linecap="round" />
+                    </svg>
+                  )}
+                </span>
+                <span class="uzel-kdy">{kratce(o.datum)}</span>
+                <strong class="uzel-co">{i + 1}. odběr vzorků</strong>
+                <span class="uzel-stav">{ODBER_TEXT[o.stav]}</span>
+              </div>
+            </Fragment>
+          ))
+        }
+        <div class="spoj"><span>vyhoví</span></div>
+        <div class:list={['uzel', 'cil', ODBERY[ODBERY.length - 1]?.stav === 'vyhovel' && 'hotovo']}>
+          <span class="uzel-znak" aria-hidden="true">✓</span>
+          <span class="uzel-kdy">potom</span>
+          <strong class="uzel-co">Napojení přivaděče</strong>
+          <span class="uzel-stav">po vyhovujícím rozboru a&nbsp;povolení</span>
+        </div>
+      </div>
+      <p class="smycka">
+        <span class="smycka-znak" aria-hidden="true">↺</span>
+        <span>Když vzorky nevyhoví, potrubí se znovu propláchne a&nbsp;odebere se další vzorek.</span>
+      </p>
+
+      <ul class="rozbor-fakta">
+        <li>
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <circle cx="16" cy="16" r="13" fill="none" stroke="currentColor" stroke-width="2" />
+            <text x="16" y="22" text-anchor="middle" font-size="17" font-weight="700" fill="currentColor">§</text>
+          </svg>
+          <span><strong>Předpisy s&nbsp;tím počítají.</strong> Když vzorek nevyhoví, odběr se „neprodleně opakuje“.</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M7 5h9M11.5 5v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M3 10h14a6 6 0 0 1 6 6v2h-5v-1.5a1.5 1.5 0 0 0-1.5-1.5H3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            <path d="M20.5 22c-1.3 1.8-2 2.9-2 3.8a2 2 0 0 0 4 0c0-.9-.7-2-2-3.8Z" fill="currentColor" />
+          </svg>
+          <span><strong>Kohoutků se to netýká.</strong> Přivaděč ještě není napojený na vodojem.</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2" />
+            <path d="M16 9v7l5 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <span><strong>Na výsledek se čeká.</strong> Rozbor v&nbsp;laboratoři trvá nejméně 24 hodin.</span>
+        </li>
+      </ul>
+      <p class="poznamka">
+        Zdroje: obec Hradešín <a href="https://www.hradesin.cz/obecni-urad/aktuality/informace-voda-78cs.html" rel="noopener">9.&nbsp;11.</a> a&nbsp;<a href="https://www.hradesin.cz/obecni-urad/aktuality/informace-voda-silnice-75cs.html" rel="noopener">6.&nbsp;11.</a>,{' '}
+        <a href="https://www.zakonyprolidi.cz/cs/2004-252" rel="noopener">vyhláška 252/2004 Sb.</a> (§&nbsp;4 a&nbsp;§&nbsp;9),{' '}
+        <a href="https://szu.gov.cz/wp-content/uploads/2023/02/pece_o_sit.pdf" rel="noopener">Státní zdravotní ústav (2014)</a>. Který ukazatel nevyhověl, obec neuvedla.
+      </p>
     </section>
 
     <!-- ---------- Co dělat ---------- -->
@@ -376,7 +462,9 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
       <h2 id="h-zdroje">Odkud to víme</h2>
       <p>
         Neoficiální přehled k&nbsp;{aktualizovano}, sestavený jen z&nbsp;oznámení obcí Hradešín a&nbsp;Přišimasy a&nbsp;vyjádření
-        provozovatele Stavokomplet. Závazné jsou vždy informace obce a&nbsp;provozovatele.
+        provozovatele Stavokomplet. Obecné informace o&nbsp;rozborech vody jsou z&nbsp;vyhlášky o&nbsp;pitné vodě a&nbsp;metodiky
+        Státního zdravotního ústavu. Závazné jsou vždy informace obce
+        a&nbsp;provozovatele.
       </p>
       <ul>
         {ZDROJE.map((z) => <li><a href={z.url} rel="noopener">{z.nazev}</a></li>)}
@@ -390,6 +478,24 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
 </Layout>
 
 <script>
+  // Volba „Zastavit animace“ z hlavní stránky platí i tady.
+  try {
+    if (localStorage.getItem('hradesin-voda:pohyb') === 'stop') document.documentElement.dataset.pohyb = 'stop';
+  } catch {
+    /* soukromé okno */
+  }
+
+  // Odkaz na list níž na stránce: cílový list se krátce nasvítí, ať je vidět, kam stránka sjela.
+  document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) => {
+    a.addEventListener('click', () => {
+      const cil = a.hash ? document.querySelector<HTMLElement>(a.hash) : null;
+      if (!cil) return;
+      cil.classList.remove('nasvit');
+      void cil.offsetWidth;
+      cil.classList.add('nasvit');
+    });
+  });
+
   // Datum poslední dodávky: dnes / včera / zítra podle pražského času návštěvníka.
   const denDodavky = document.querySelector<HTMLElement>('.den-dodavky[data-den]');
   if (denDodavky) {
@@ -999,6 +1105,128 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
     color: #c8281f;
   }
 
+  /* Krok s odkazem: celý krok je klikací (roztažený odkaz), kolečko pulzuje, šipka poskakuje. */
+  .krok.klik {
+    border-radius: 8px;
+  }
+
+  .krok-odkaz {
+    color: #0b5f9e;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+
+  .krok-odkaz::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    z-index: 1;
+    border-radius: 8px;
+  }
+
+  .krok.klik:hover .krok-odkaz::after,
+  .krok-odkaz:focus-visible::after {
+    background: rgba(11, 95, 158, 0.07);
+  }
+
+  .krok-odkaz:focus-visible {
+    outline: none;
+  }
+
+  .krok-odkaz:focus-visible::after {
+    outline: 2px solid var(--paper-ink);
+  }
+
+  .krok-vic {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 8px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #fff;
+    background: #0b5f9e;
+  }
+
+  .krok.klik:hover .krok-vic {
+    background: #084a7c;
+  }
+
+  .sipka-dolu {
+    display: inline-block;
+    animation: poskok 1.4s ease-in-out infinite;
+  }
+
+  .krok.klik .krok-znak {
+    animation: pulz 2s ease-out infinite;
+  }
+
+  @keyframes poskok {
+    0%,
+    100% {
+      translate: 0 -1px;
+    }
+    50% {
+      translate: 0 3px;
+    }
+  }
+
+  @keyframes pulz {
+    0% {
+      box-shadow:
+        inset 0 0 0 2.5px #0b5f9e,
+        0 0 0 0 rgba(11, 95, 158, 0.5);
+    }
+    70%,
+    100% {
+      box-shadow:
+        inset 0 0 0 2.5px #0b5f9e,
+        0 0 0 12px rgba(11, 95, 158, 0);
+    }
+  }
+
+  /* Po kliknutí na odkaz uvnitř stránky: plynulý posun a krátké nasvícení cílového listu. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html:not([data-pohyb='stop'])) {
+      scroll-behavior: smooth;
+    }
+  }
+
+  .rozbor {
+    scroll-margin-top: 24px;
+  }
+
+  .list.nasvit {
+    animation: nasvit 2.4s ease-out 1;
+  }
+
+  @keyframes nasvit {
+    0%,
+    35% {
+      box-shadow:
+        0 0 0 5px rgba(11, 95, 158, 0.85),
+        0 1px 1px rgba(0, 0, 0, 0.08),
+        0 18px 34px -18px rgba(0, 0, 0, 0.55);
+    }
+    100% {
+      box-shadow:
+        0 0 0 5px rgba(11, 95, 158, 0),
+        0 1px 1px rgba(0, 0, 0, 0.08),
+        0 18px 34px -18px rgba(0, 0, 0, 0.55);
+    }
+  }
+
+  /* Kdo na hlavní stránce zastavil animace, nemá je ani tady. */
+  :global(html[data-pohyb='stop']) .sipka-dolu,
+  :global(html[data-pohyb='stop']) .krok.klik .krok-znak,
+  :global(html[data-pohyb='stop']) .list.nasvit {
+    animation: none;
+  }
+
   .privadec-dole {
     display: grid;
     gap: 26px;
@@ -1109,6 +1337,193 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
     outline-color: var(--paper-ink);
   }
 
+  /* ---------- Rozbor vody z přivaděče: odběry jako cesta k napojení ---------- */
+
+  .rozbor-uvod {
+    max-width: 64ch;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .cesta {
+    display: flex;
+    flex-direction: column;
+    margin-top: 24px;
+  }
+
+  .uzel {
+    position: relative;
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    column-gap: 12px;
+    align-items: center;
+    padding: 12px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+  }
+
+  .uzel-znak {
+    grid-row: 1 / span 3;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+
+  .uzel-kdy {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted-paper);
+  }
+
+  .uzel-co {
+    font-size: 0.9375rem;
+    line-height: 1.25;
+  }
+
+  .uzel-stav {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .uzel.nevyhovel .uzel-znak {
+    color: #fff;
+    background: #c8281f;
+  }
+
+  .uzel.nevyhovel .uzel-stav {
+    color: #c8281f;
+  }
+
+  .uzel.ceka {
+    background: #fffdf8;
+    border-color: #0b5f9e;
+  }
+
+  .uzel.ceka .uzel-znak {
+    background: #fffdf8;
+    box-shadow: inset 0 0 0 3px #0b5f9e;
+  }
+
+  .uzel.ceka .uzel-znak svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .uzel.ceka .uzel-stav,
+  .uzel.vyhovel .uzel-stav {
+    color: #0b5f9e;
+  }
+
+  .uzel.vyhovel .uzel-znak,
+  .uzel.cil.hotovo .uzel-znak {
+    color: #fff;
+    background: #0b5f9e;
+    box-shadow: none;
+  }
+
+  .uzel.cil .uzel-znak {
+    color: #827f79;
+    box-shadow: inset 0 0 0 2px #827f79;
+  }
+
+  .uzel.cil .uzel-stav {
+    font-weight: 400;
+    color: var(--muted-paper);
+  }
+
+  .uzel-ted {
+    position: absolute;
+    top: -10px;
+    right: 12px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+    background: #0b5f9e;
+  }
+
+  /* Spojnice mezi uzly: na mobilu svisle, na širší obrazovce vodorovně. */
+  .spoj {
+    position: relative;
+    height: 40px;
+    margin-left: 34.5px;
+    border-left: 3px dashed #827f79;
+  }
+
+  .spoj::after {
+    content: '';
+    position: absolute;
+    left: -8.5px;
+    bottom: -2px;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 9px solid #827f79;
+  }
+
+  .spoj span {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    translate: 0 -50%;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .smycka {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 16px !important;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .smycka-znak {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-weight: 700;
+    color: #fff;
+    background: #c8281f;
+  }
+
+  .rozbor-fakta {
+    display: grid;
+    gap: 12px;
+    margin: 22px 0 0;
+    padding: 18px 0 0;
+    list-style: none;
+    border-top: 1px dashed rgba(29, 27, 24, 0.3);
+  }
+
+  .rozbor-fakta li {
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 10px;
+    align-items: start;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .rozbor-fakta svg {
+    width: 30px;
+    height: 30px;
+  }
+
   /* ---------- Širší obrazovky ---------- */
 
   @media (min-width: 640px) {
@@ -1128,6 +1543,58 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 34px;
     }
+
+    /* Odběry vodorovně: uzly vedle sebe, spojnice se šipkou mezi nimi. */
+    .cesta {
+      flex-direction: row;
+      align-items: stretch;
+    }
+
+    .uzel {
+      flex: 1 1 0;
+      grid-template-columns: 1fr;
+      justify-items: center;
+      align-content: start;
+      row-gap: 3px;
+      padding: 16px 10px 14px;
+      text-align: center;
+    }
+
+    .uzel-znak {
+      grid-row: auto;
+      margin-bottom: 6px;
+    }
+
+    .spoj {
+      flex: 0 0 clamp(64px, 9vw, 110px);
+      align-self: flex-start;
+      height: 0;
+      margin: 39px 0 0;
+      border-left: 0;
+      border-top: 3px dashed #827f79;
+    }
+
+    .spoj::after {
+      left: auto;
+      right: -3px;
+      top: -8.5px;
+      bottom: auto;
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      border-left: 9px solid #827f79;
+      border-right: 0;
+    }
+
+    .spoj span {
+      left: 50%;
+      top: -26px;
+      translate: -50% 0;
+    }
+
+    .rozbor-fakta {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
   }
 
   @media (min-width: 960px) {
@@ -1146,6 +1613,7 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
     .kalendar { grid-column: span 5; }
     .proc { grid-column: span 7; }
     .privadec { grid-column: 1 / -1; }
+    .rozbor { grid-column: 1 / -1; }
     .delat { grid-column: span 7; }
     .kontakty { grid-column: span 5; }
     .zdroje { grid-column: 1 / -1; }
