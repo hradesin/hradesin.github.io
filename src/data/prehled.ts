@@ -8,6 +8,13 @@
 
 export const AKTUALIZOVANO = '2026-11-09';
 
+/** Poslední ohlášená dodávka (dlaždice „Jak to vypadá teď“). Datum se na stránce samo změní na „dnes“ / „včera“. */
+export const DODAVKA = {
+  datum: '2026-11-09',
+  cas: 'od 19\u00a0h',
+  pozn: 'asi přes hodinu, dokud se čerpadla sama nevypnou',
+};
+
 /* ---------- Kde stojí cisterny ---------- */
 
 const mapa = (lat: number, lon: number) => `https://www.google.com/maps/search/?api=1&query=${lat}%2C${lon}`;
@@ -66,11 +73,12 @@ export const KALENDAR: Den[] = [
 
 export type KrokStav = 'hotovo' | 'probiha' | 'ceka';
 
-export const PRIVADEC: { stav: KrokStav; co: string; kdy: string }[] = [
+/** pozor = krátká zpráva, která se u kroku zvýrazní červeně (něco nevyšlo). */
+export const PRIVADEC: { stav: KrokStav; co: string; kdy: string; pozor?: string }[] = [
   // Každý krok doslova podle zdroje v závorce: P = obec Přišimasy, H = obec Hradešín.
   { stav: 'hotovo', co: 'Propojení u vodojemu Úvaly-jih', kdy: 'dokončeno, technologie oživená (P 3. 11.)' },
   { stav: 'hotovo', co: 'Tlakové zkoušky celé trasy z Úval', kdy: '3. 11., výsledek vyhovující (H 6. 11.)' },
-  { stav: 'probiha', co: 'Rozbor vody', kdy: 'vzorky z 3. 11. nevyhověly, nové odebrány 6. 11., čeká se na výsledky (H 9. 11.)' },
+  { stav: 'probiha', co: 'Rozbor vody', pozor: 'první vzorky z 3. 11. nevyhověly', kdy: 'nové odebrány 6. 11., čeká se na výsledky (H 9. 11.)' },
   { stav: 'probiha', co: 'Propojení s vodojemem Hradešín', kdy: 'zhotovitel dodělává dočasné propojovací potrubí (H 6. 11.)' },
   { stav: 'ceka', co: 'Povolení k předčasnému užívání', kdy: 'žádost plánovaná na 1. polovinu listopadu (P 3. 11.)' },
   { stav: 'ceka', co: 'Voda z Úval poteče do vodojemu', kdy: 'až po povolení, termín zatím nebyl oznámen (H 29. 10.)' },

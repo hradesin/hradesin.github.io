@@ -4,6 +4,7 @@ import status from '../data/status.json';
 import { UMAMI } from '../config';
 import {
   AKTUALIZOVANO,
+  DODAVKA,
   KALENDAR,
   MISTA,
   PRIVADEC,
@@ -19,6 +20,7 @@ const image = new URL(`og-${stav}.jpg?v=${version}`, new URL(home, Astro.site)).
 // Datum bez časových pásem: poledne UTC, čteme UTC části.
 const den = (iso: string) => new Date(`${iso}T12:00:00Z`);
 const kratce = (iso: string) => `${den(iso).getUTCDate()}. ${den(iso).getUTCMonth() + 1}.`;
+const V_DNU = ['v neděli', 'v pondělí', 'v úterý', 've středu', 've čtvrtek', 'v pátek', 'v sobotu'];
 const NAZVY_DNU = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
 const aktualizovano = `${kratce(AKTUALIZOVANO)} ${den(AKTUALIZOVANO).getUTCFullYear()}`;
 
@@ -73,8 +75,13 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
             <path d="M16 9v7l5 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
           <p class="stitek-dl">Poslední ohlášená dodávka</p>
-          <p class="cislo">od 19&nbsp;h</p>
-          <p class="pod">v&nbsp;pondělí 9.&nbsp;11., asi přes hodinu, dokud se čerpadla sama nevypnou</p>
+          <p class="cislo">{DODAVKA.cas}</p>
+          <p class="pod">
+            <span class="den-dodavky" data-den={DODAVKA.datum} data-kratce={kratce(DODAVKA.datum)}>
+              {V_DNU[den(DODAVKA.datum).getUTCDay()]} {kratce(DODAVKA.datum)}
+            </span>
+            {DODAVKA.pozn}
+          </p>
         </div>
         <div>
           <svg class="ikona" viewBox="0 0 32 32" aria-hidden="true">
@@ -140,7 +147,10 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
               </span>
               <span class="krok-stav">{KROK_TEXT[k.stav]}</span>
               <span class="krok-co">{k.co}</span>
-              <span class="krok-kdy">{k.kdy}</span>
+              <span class="krok-kdy">
+                {k.pozor && <strong class="krok-pozor"><span aria-hidden="true">✕</span> {k.pozor}</strong>}
+                {k.kdy}
+              </span>
             </li>
           ))
         }
@@ -380,6 +390,18 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
 </Layout>
 
 <script>
+  // Datum poslední dodávky: dnes / včera / zítra podle pražského času návštěvníka.
+  const denDodavky = document.querySelector<HTMLElement>('.den-dodavky[data-den]');
+  if (denDodavky) {
+    const dnes = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Prague' }).format(new Date());
+    const rozdil = Math.round((Date.parse(denDodavky.dataset.den ?? '') - Date.parse(dnes)) / 864e5);
+    const slovo = rozdil === 0 ? 'dnes' : rozdil === -1 ? 'včera' : rozdil === 1 ? 'zítra' : '';
+    if (slovo) {
+      denDodavky.textContent = `${slovo} ${denDodavky.dataset.kratce ?? ''}`;
+      denDodavky.classList.toggle('je-dnes', rozdil === 0);
+    }
+  }
+
   // Kalendář: najetí, fokus nebo klepnutí na den ukáže jeho poznámku pod mřížkou.
   const detail = document.getElementById('kal-detail');
   const dny = document.querySelectorAll<HTMLButtonElement>('.kal .den[data-kdy]');
@@ -571,6 +593,27 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
     margin-top: 4px;
     font-size: 0.75rem;
     line-height: 1.35;
+  }
+
+  /* Datum dodávky jako štítek; skript ho přepíše na „dnes“ / „včera“ / „zítra“. */
+  .den-dodavky {
+    display: block;
+    width: fit-content;
+    margin: 2px 0 6px;
+    padding: 3px 8px;
+    border: 2px solid var(--paper-ink);
+    border-radius: 3px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .den-dodavky.je-dnes {
+    border-color: #0b5f9e;
+    background: #0b5f9e;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
   .dlazdice > .cisterny {
@@ -948,6 +991,12 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
     font-size: 0.75rem;
     line-height: 1.35;
     color: var(--muted-paper);
+  }
+
+  .krok-pozor {
+    display: block;
+    margin-bottom: 2px;
+    color: #c8281f;
   }
 
   .privadec-dole {
