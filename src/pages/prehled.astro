@@ -21,7 +21,7 @@ const image = new URL(`og-${stav}.jpg?v=${version}`, new URL(home, Astro.site)).
 // Datum bez časových pásem: poledne UTC, čteme UTC části.
 const den = (iso: string) => new Date(`${iso}T12:00:00Z`);
 const kratce = (iso: string) => `${den(iso).getUTCDate()}. ${den(iso).getUTCMonth() + 1}.`;
-const ODBER_TEXT = { nevyhovel: 'nevyhověl', ceka: 'čeká se na výsledek', vyhovel: 'vyhověl' } as const;
+const ODBER_TEXT = { nevyhovel: 'nevyhověl', ceka: 'čeká se na výsledek', vyhovel: 'vyhověl', planovano: 'naplánovaný' } as const;
 const V_DNU = ['v neděli', 'v pondělí', 'v úterý', 've středu', 've čtvrtek', 'v pátek', 'v sobotu'];
 const NAZVY_DNU = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
 const aktualizovano = `${kratce(AKTUALIZOVANO)} ${den(AKTUALIZOVANO).getUTCFullYear()}`;
@@ -173,13 +173,19 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
           <h3>Kdy poteče voda z&nbsp;Úval?</h3>
           <p><strong>Oficiální termín zatím není.</strong></p>
           <p>
-            První vzorky vody z&nbsp;přivaděče (3.&nbsp;11.) v&nbsp;rozboru nevyhověly. Další se odebraly 6.&nbsp;11.
-            a&nbsp;čeká se na výsledky (obec Hradešín, 9.&nbsp;11.).
+            Vzorky vody z&nbsp;přivaděče zatím nevyhověly, ani první (3.&nbsp;11.), ani druhé (6.&nbsp;11.). Ve středu
+            11.&nbsp;11. se přivaděč znovu propláchne, odkalí a&nbsp;dezinfikuje, další vzorek se odebere v&nbsp;pátek
+            13.&nbsp;11. (obec Přišimasy, 10.&nbsp;11.).
           </p>
           <p>
-            Kromě vyhovujícího rozboru ještě chybí dokončení propojení s&nbsp;vodojemem a&nbsp;povolení
-            k&nbsp;předčasnému užívání. Teprve pak může do vodojemu Hradešín téct i&nbsp;voda z&nbsp;Úval (obec
-            Hradešín, 29.&nbsp;10. a&nbsp;6.&nbsp;11.).
+            Žádost o&nbsp;povolení k&nbsp;předčasnému užívání může jít na krajskou hygienickou stanici (KHS) až
+            s&nbsp;vyhovujícím rozborem a&nbsp;kompletními podklady. Bez kladného stanoviska hygieny povolení nebude.
+            Zároveň se dokončuje administrativa: dohodu o&nbsp;provozně souvisejících vodovodech mezi Úvaly
+            a&nbsp;Přišimasy by nové vedení Úval mohlo podepsat ve čtvrtek 12.&nbsp;11. ráno (obec Přišimasy, 10.&nbsp;11.).
+          </p>
+          <p>
+            Ještě chybí i&nbsp;dokončení propojení s&nbsp;vodojemem. Teprve pak může do vodojemu Hradešín téct
+            i&nbsp;voda z&nbsp;Úval (obec Hradešín, 29.&nbsp;10. a&nbsp;6.&nbsp;11.).
           </p>
           <p><a href="#rozbor">Co znamená, že rozbor nevyhověl?</a></p>
         </div>
@@ -210,9 +216,10 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
         {
           ODBERY.map((o, i) => (
             <Fragment>
-              {i > 0 && <div class="spoj"><span>znovu</span></div>}
+              {i > 0 && <div class="spoj"><span>{o.pred ?? 'znovu'}</span></div>}
               <div class:list={['uzel', o.stav]}>
                 {o.stav === 'ceka' && <span class="uzel-ted">teď</span>}
+                {o.stav === 'planovano' && <span class="uzel-ted">další</span>}
                 <span class="uzel-znak" aria-hidden="true">
                   {o.stav === 'nevyhovel' && '✕'}
                   {o.stav === 'vyhovel' && '✓'}
@@ -221,8 +228,14 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
                       <path d="M7 4h10M7 20h10M8 4c0 5 8 5 8 8s-8 3-8 8M16 4c0 5-8 5-8 8s8 3 8 8" fill="none" stroke="#0b5f9e" stroke-width="1.8" stroke-linecap="round" />
                     </svg>
                   )}
+                  {o.stav === 'planovano' && (
+                    <svg viewBox="0 0 24 24">
+                      <rect x="4" y="6" width="16" height="14" rx="2" fill="none" stroke="#0b5f9e" stroke-width="1.8" />
+                      <path d="M4 10.5h16M8.5 3.5v4M15.5 3.5v4" fill="none" stroke="#0b5f9e" stroke-width="1.8" stroke-linecap="round" />
+                    </svg>
+                  )}
                 </span>
-                <span class="uzel-kdy">{kratce(o.datum)}</span>
+                <span class="uzel-kdy">{o.stav === 'planovano' && `${NAZVY_DNU[den(o.datum).getUTCDay()]} `}{kratce(o.datum).replace(' ', '\u00a0')}</span>
                 <strong class="uzel-co">{i + 1}. odběr vzorků</strong>
                 <span class="uzel-stav">{ODBER_TEXT[o.stav]}</span>
               </div>
@@ -239,7 +252,10 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
       </div>
       <p class="smycka">
         <span class="smycka-znak" aria-hidden="true">↺</span>
-        <span>Když vzorky nevyhoví, potrubí se obvykle znovu propláchne a&nbsp;odebere se další vzorek.</span>
+        <span>
+          Když vzorky nevyhoví, potrubí se znovu propláchne a&nbsp;odebere se další vzorek. Teď: proplach, odkalení
+          a&nbsp;dezinfekce ve středu 11.&nbsp;11., odběr v&nbsp;pátek 13.&nbsp;11.
+        </span>
       </p>
 
       <ul class="rozbor-fakta">
@@ -267,9 +283,9 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
         </li>
       </ul>
       <p class="poznamka">
-        Zdroje: obec Hradešín <a href="https://www.hradesin.cz/obecni-urad/aktuality/informace-voda-78cs.html" rel="noopener">9.&nbsp;11.</a> a&nbsp;<a href="https://www.hradesin.cz/obecni-urad/aktuality/informace-voda-silnice-75cs.html" rel="noopener">6.&nbsp;11.</a>,{' '}
+        Zdroje: obec Přišimasy <a href="https://www.prisimasy.cz/zivot-v-obci/aktuality/privadec-vody-aktualni-stav-1641cs.html" rel="noopener">10.&nbsp;11.</a>, obec Hradešín <a href="https://www.hradesin.cz/obecni-urad/aktuality/informace-voda-78cs.html" rel="noopener">9.&nbsp;11.</a> a&nbsp;<a href="https://www.hradesin.cz/obecni-urad/aktuality/informace-voda-silnice-75cs.html" rel="noopener">6.&nbsp;11.</a>,{' '}
         <a href="https://www.zakonyprolidi.cz/cs/2004-252" rel="noopener">vyhláška 252/2004 Sb.</a> (§&nbsp;4 a&nbsp;§&nbsp;9),{' '}
-        <a href="https://szu.gov.cz/wp-content/uploads/2023/02/pece_o_sit.pdf" rel="noopener">Státní zdravotní ústav (2014)</a>. Který ukazatel nevyhověl, obec neuvedla.
+        <a href="https://szu.gov.cz/wp-content/uploads/2023/02/pece_o_sit.pdf" rel="noopener">Státní zdravotní ústav (2014)</a>. Ve kterém ukazateli vzorky nevyhověly, zatím není známo: kompletní laboratorní protokol obec Přišimasy k&nbsp;10.&nbsp;11. neměla.
       </p>
     </section>
 
@@ -1411,9 +1427,25 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
     box-shadow: inset 0 0 0 3px #0b5f9e;
   }
 
-  .uzel.ceka .uzel-znak svg {
+  .uzel.ceka .uzel-znak svg,
+  .uzel.planovano .uzel-znak svg {
     width: 24px;
     height: 24px;
+  }
+
+  /* Naplánovaný odběr: zatím jen přerušovaný obrys. */
+  .uzel.planovano {
+    border-style: dashed;
+    border-color: #0b5f9e;
+  }
+
+  .uzel.planovano .uzel-znak {
+    background: #fffdf8;
+    border: 2px dashed #0b5f9e;
+  }
+
+  .uzel.planovano .uzel-stav {
+    color: #0b5f9e;
   }
 
   .uzel.ceka .uzel-stav,
@@ -1544,7 +1576,14 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
       gap: 34px;
     }
 
-    /* Odběry vodorovně: uzly vedle sebe, spojnice se šipkou mezi nimi. */
+    .rozbor-fakta {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+  }
+
+  @media (min-width: 840px) {
+    /* Odběry vodorovně: uzly vedle sebe, spojnice se šipkou mezi nimi. Užší displej by čtyři uzly nepobral. */
     .cesta {
       flex-direction: row;
       align-items: stretch;
@@ -1566,7 +1605,7 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
     }
 
     .spoj {
-      flex: 0 0 clamp(64px, 9vw, 110px);
+      flex: 0 0 clamp(76px, 9vw, 110px);
       align-self: flex-start;
       height: 0;
       margin: 39px 0 0;
@@ -1589,11 +1628,6 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
       left: 50%;
       top: -26px;
       translate: -50% 0;
-    }
-
-    .rozbor-fakta {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 18px;
     }
   }
 

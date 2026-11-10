@@ -64,11 +64,11 @@ export const KALENDAR: Den[] = [
   { datum: '2026-11-03', stav: 'vypadek', pozn: 'Bez vody. Tlakové zkoušky přivaděče vyhověly, odebrány první vzorky vody z přivaděče (podle obce 9. 11. nevyhověly). Stavokomplet vysvětluje, proč Přišimasy vodu mají a Hradešín ne.' },
   { datum: '2026-11-04', stav: 'vypadek', pozn: 'Plánované obnovení. Večer ale ve vodojemu zase dochází voda, další obnovení v pátek.' },
   { datum: '2026-11-05', stav: 'vypadek', pozn: 'Bez vody, obnovení ohlášeno na pátek.' },
-  { datum: '2026-11-06', stav: 'vypadek', pozn: 'Odpoledne pravděpodobné přerušení, obnovení ohlášeno na neděli 8. 11. Z přivaděče odebrány další vzorky vody.' },
+  { datum: '2026-11-06', stav: 'vypadek', pozn: 'Odpoledne pravděpodobné přerušení, obnovení ohlášeno na neděli 8. 11. Z přivaděče odebrány další vzorky vody (podle obce Přišimasy 10. 11. nevyhověly).' },
   { datum: '2026-11-07', stav: 'vypadek', pozn: 'Bez vody.' },
   { datum: '2026-11-08', stav: 'vypadek', pozn: 'Ve vrtech dál ubývá vody. Dodávka jen 18–20 h, do vodojemu natéká pomaleji, než se čekalo.' },
   { datum: '2026-11-09', stav: 'vypadek', pozn: 'Podle Stavokompletu je situace stále kritická. Voda poteče jen od 19 h, asi přes hodinu, dokud se čerpadla sama nevypnou. Pravidelné pouštění vody nejde domluvit, některý den voda nepoteče vůbec. Cisterny jsou uzamčené, cisterna od úřadu je přemístěná k čp. 119 u hlavní silnice.' },
-  { datum: '2026-11-10', stav: 'vypadek', pozn: 'Voda poteče opět od 19 h, dokud automatický systém nevypne čerpadla, asi přes hodinu.' },
+  { datum: '2026-11-10', stav: 'vypadek', pozn: 'Voda poteče opět od 19 h, dokud automatický systém nevypne čerpadla, asi přes hodinu. Ani druhé vzorky z přivaděče nevyhověly, další odběr je naplánovaný na pátek 13. 11.' },
 ];
 
 /* ---------- Přivaděč z Úval ---------- */
@@ -80,20 +80,24 @@ export const PRIVADEC: { stav: KrokStav; co: string; kdy: string; pozor?: string
   // Každý krok doslova podle zdroje v závorce: P = obec Přišimasy, H = obec Hradešín.
   { stav: 'hotovo', co: 'Propojení u vodojemu Úvaly-jih', kdy: 'dokončeno, technologie oživená (P 3. 11.)' },
   { stav: 'hotovo', co: 'Tlakové zkoušky celé trasy z Úval', kdy: '3. 11., výsledek vyhovující (H 6. 11.)' },
-  { stav: 'probiha', co: 'Rozbor vody', odkaz: '#rozbor', pozor: 'první vzorky z 3. 11. nevyhověly', kdy: 'nové odebrány 6. 11., čeká se na výsledky (H 9. 11.)' },
+  { stav: 'probiha', co: 'Rozbor vody', odkaz: '#rozbor', pozor: 'nevyhověly vzorky z 3. 11. ani z 6. 11.', kdy: '11. 11. proplach, odkalení a dezinfekce, další vzorek v pátek 13. 11. (P 10. 11.)' },
   { stav: 'probiha', co: 'Propojení s vodojemem Hradešín', kdy: 'zhotovitel dodělává dočasné propojovací potrubí (H 6. 11.)' },
-  { stav: 'ceka', co: 'Povolení k předčasnému užívání', kdy: 'žádost plánovaná na 1. polovinu listopadu (P 3. 11.)' },
+  { stav: 'ceka', co: 'Povolení k předčasnému užívání', kdy: 'žádost půjde na hygienu (KHS) až s vyhovujícím rozborem a kompletními podklady (P 10. 11.)' },
   { stav: 'ceka', co: 'Voda z Úval poteče do vodojemu', kdy: 'až po povolení, termín zatím nebyl oznámen (H 29. 10.)' },
 ];
 
 /* ---------- Rozbor vody z přivaděče ---------- */
 
-export type OdberStav = 'nevyhovel' | 'ceka' | 'vyhovel';
+export type OdberStav = 'nevyhovel' | 'ceka' | 'vyhovel' | 'planovano';
 
-/** Odběry vzorků z nového přivaděče podle obce Hradešín (9. 11.). Nový odběr přidej na konec. */
-export const ODBERY: { datum: string; stav: OdberStav }[] = [
+/**
+ * Odběry vzorků z nového přivaděče podle obcí Hradešín (9. 11.) a Přišimasy (10. 11.). Nový odběr přidej na konec.
+ * pred = popisek spojnice před odběrem (výchozí „znovu“), jen když je krok mezi odběry ověřený.
+ */
+export const ODBERY: { datum: string; stav: OdberStav; pred?: string }[] = [
   { datum: '2026-11-03', stav: 'nevyhovel' },
-  { datum: '2026-11-06', stav: 'ceka' },
+  { datum: '2026-11-06', stav: 'nevyhovel' },
+  { datum: '2026-11-13', stav: 'planovano', pred: 'proplach' },
 ];
 
 /* ---------- Zdroje ---------- */
@@ -138,6 +142,10 @@ export const ZDROJE = [
   {
     nazev: 'Státní zdravotní ústav – Zásady správné praxe při výstavbě a opravách vodovodní sítě (2014, PDF)',
     url: 'https://szu.gov.cz/wp-content/uploads/2023/02/pece_o_sit.pdf',
+  },
+  {
+    nazev: 'Obec Přišimasy – přivaděč 10. 11.: ani druhý vzorek nevyhověl, další odběr 13. 11., dohoda s Úvaly, KHS',
+    url: 'https://www.prisimasy.cz/zivot-v-obci/aktuality/privadec-vody-aktualni-stav-1641cs.html',
   },
   {
     nazev: 'Obec Přišimasy – přivaděč, stav 3. 11.',
