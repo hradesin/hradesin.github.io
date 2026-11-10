@@ -7,13 +7,13 @@
  * Při aktualizaci přepiš AKTUALIZOVANO a dotčené bloky.
  */
 
-export const AKTUALIZOVANO = '2026-11-09';
+export const AKTUALIZOVANO = '2026-11-10';
 
 /** Poslední ohlášená dodávka (dlaždice „Jak to vypadá teď“). Datum se na stránce samo změní na „dnes“ / „včera“. */
 export const DODAVKA = {
-  datum: '2026-11-09',
+  datum: '2026-11-10',
   cas: 'od 19\u00a0h',
-  pozn: 'asi přes hodinu, dokud se čerpadla sama nevypnou',
+  pozn: 'přes hodinu, dokud automatický systém nevypne čerpadla',
 };
 
 /* ---------- Kde stojí cisterny ---------- */
@@ -68,6 +68,7 @@ export const KALENDAR: Den[] = [
   { datum: '2026-11-07', stav: 'vypadek', pozn: 'Bez vody.' },
   { datum: '2026-11-08', stav: 'vypadek', pozn: 'Ve vrtech dál ubývá vody. Dodávka jen 18–20 h, do vodojemu natéká pomaleji, než se čekalo.' },
   { datum: '2026-11-09', stav: 'vypadek', pozn: 'Podle Stavokompletu je situace stále kritická. Voda poteče jen od 19 h, asi přes hodinu, dokud se čerpadla sama nevypnou. Pravidelné pouštění vody nejde domluvit, některý den voda nepoteče vůbec. Cisterny jsou uzamčené, cisterna od úřadu je přemístěná k čp. 119 u hlavní silnice.' },
+  { datum: '2026-11-10', stav: 'vypadek', pozn: 'Voda poteče opět od 19 h, dokud automatický systém nevypne čerpadla, asi přes hodinu.' },
 ];
 
 /* ---------- Přivaděč z Úval ---------- */
@@ -99,8 +100,12 @@ export const ODBERY: { datum: string; stav: OdberStav }[] = [
 
 export const ZDROJE = [
   {
-    nazev: 'Obec Hradešín – všechny aktuality k vodě (16. 10. – 9. 11.)',
+    nazev: 'Obec Hradešín – všechny aktuality k vodě (16. 10. – 10. 11.)',
     url: 'https://www.hradesin.cz/obecni-urad/aktuality/',
+  },
+  {
+    nazev: 'Obec Hradešín – dodávka 10. 11. od 19 h',
+    url: 'https://www.hradesin.cz/obecni-urad/aktuality/informace-k-dodavce-vody-do-domacnosti-79cs.html',
   },
   {
     nazev: 'Obec Hradešín – 9. 11.: omezené dodávky, cisterny, rozbor vody (příloha PDF)',

@@ -203,14 +203,14 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
       <h2 id="h-rozbor">Rozbor vody z&nbsp;přivaděče</h2>
       <p class="rozbor-uvod">
         <strong>U&nbsp;nového potrubí se s&nbsp;tím počítá.</strong> Po stavbě v&nbsp;něm bývají nečistoty a&nbsp;voda v&nbsp;nových
-        trubkách stojí. Proto se proplachuje a&nbsp;vzorky se odebírají znovu, dokud nevyhoví.
+        trubkách stojí. Obvyklý postup je potrubí propláchnout a&nbsp;vzorky odebrat znovu, dokud nevyhoví.
       </p>
 
       <div class="cesta">
         {
           ODBERY.map((o, i) => (
             <Fragment>
-              {i > 0 && <div class="spoj"><span>proplach</span></div>}
+              {i > 0 && <div class="spoj"><span>znovu</span></div>}
               <div class:list={['uzel', o.stav]}>
                 {o.stav === 'ceka' && <span class="uzel-ted">teď</span>}
                 <span class="uzel-znak" aria-hidden="true">
@@ -239,7 +239,7 @@ const KROK_TEXT = { hotovo: 'hotovo', probiha: 'probíhá', ceka: 'čeká' } as 
       </div>
       <p class="smycka">
         <span class="smycka-znak" aria-hidden="true">↺</span>
-        <span>Když vzorky nevyhoví, potrubí se znovu propláchne a&nbsp;odebere se další vzorek.</span>
+        <span>Když vzorky nevyhoví, potrubí se obvykle znovu propláchne a&nbsp;odebere se další vzorek.</span>
       </p>
 
       <ul class="rozbor-fakta">
