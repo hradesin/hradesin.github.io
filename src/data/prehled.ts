@@ -7,13 +7,13 @@
  * Při aktualizaci přepiš AKTUALIZOVANO a dotčené bloky.
  */
 
-export const AKTUALIZOVANO = '2026-11-10';
+export const AKTUALIZOVANO = '2026-11-11';
 
 /** Poslední ohlášená dodávka (dlaždice „Jak to vypadá teď“). Datum se na stránce samo změní na „dnes“ / „včera“. */
 export const DODAVKA = {
-  datum: '2026-11-10',
+  datum: '2026-11-11',
   cas: 'od 19\u00a0h',
-  pozn: 'přes hodinu, dokud automatický systém nevypne čerpadla',
+  pozn: 'dokud se nevypnou čerpadla',
 };
 
 /* ---------- Kde stojí cisterny ---------- */
@@ -23,10 +23,11 @@ const mapa = (lat: number, lon: number) => `https://www.google.com/maps/search/?
 /**
  * Oznámení obce 16. 10.: „jedna bude u obecního úřadu a druhá u hřbitova“.
  * Oznámení obce 9. 11.: „cisterna od obecního úřadu je přemístěná k čp. 119 k hlavní silnici (u Vítovských)“.
+ * Oznámení obce 11. 11.: „Cisterna je opět umístěna od čp. 119 před obecní úřad.“
  */
 export const MISTA = {
-  urad: mapa(50.0382729, 14.7562835), // obecní úřad Hradešín 114 (kontakty); cisterna tu stála do 9. 11.
-  cp119: mapa(50.0390385, 14.755669), // cisterna u čp. 119 u hlavní silnice, adresní bod čp. 119 (RÚIAN v OSM)
+  urad: mapa(50.0382729, 14.7562835), // obecní úřad Hradešín 114 (kontakty); cisterna tu stála do 9. 11. a znovu od 11. 11.
+  cp119: mapa(50.0390385, 14.755669), // cisterna tu stála 9.–11. 11., u hlavní silnice, adresní bod čp. 119 (RÚIAN v OSM)
   hrbitov: mapa(50.0363168, 14.7596479), // cisterna u hřbitova, místo upřesnil správce webu
 };
 
@@ -69,6 +70,7 @@ export const KALENDAR: Den[] = [
   { datum: '2026-11-08', stav: 'vypadek', pozn: 'Ve vrtech dál ubývá vody. Dodávka jen 18–20 h, do vodojemu natéká pomaleji, než se čekalo.' },
   { datum: '2026-11-09', stav: 'vypadek', pozn: 'Podle Stavokompletu je situace stále kritická. Voda poteče jen od 19 h, asi přes hodinu, dokud se čerpadla sama nevypnou. Pravidelné pouštění vody nejde domluvit, některý den voda nepoteče vůbec. Cisterny jsou uzamčené, cisterna od úřadu je přemístěná k čp. 119 u hlavní silnice.' },
   { datum: '2026-11-10', stav: 'vypadek', pozn: 'Voda poteče opět od 19 h, dokud automatický systém nevypne čerpadla, asi přes hodinu. Ani druhé vzorky z přivaděče nevyhověly, další odběr je naplánovaný na pátek 13. 11.' },
+  { datum: '2026-11-11', stav: 'vypadek', pozn: 'Voda poteče opět od 19 h, dokud se nevypnou čerpadla. Cisterna od čp. 119 je zpátky před obecním úřadem. Obec Hradešín potvrzuje, že vzorky z 6. 11. nevyhověly a další se odeberou v pátek 13. 11.' },
 ];
 
 /* ---------- Přivaděč z Úval ---------- */
@@ -104,8 +106,12 @@ export const ODBERY: { datum: string; stav: OdberStav; pred?: string }[] = [
 
 export const ZDROJE = [
   {
-    nazev: 'Obec Hradešín – všechny aktuality k vodě (16. 10. – 10. 11.)',
+    nazev: 'Obec Hradešín – všechny aktuality k vodě (16. 10. – 11. 11.)',
     url: 'https://www.hradesin.cz/obecni-urad/aktuality/',
+  },
+  {
+    nazev: 'Obec Hradešín – 11. 11.: dodávka od 19 h, cisterna zpět před úřadem, další vzorky 13. 11.',
+    url: 'https://www.hradesin.cz/obecni-urad/aktuality/informace-voda-81cs.html',
   },
   {
     nazev: 'Obec Hradešín – dodávka 10. 11. od 19 h',
