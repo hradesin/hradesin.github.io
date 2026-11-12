@@ -11,9 +11,9 @@ export const AKTUALIZOVANO = '2026-11-12';
 
 /** Poslední ohlášená dodávka (dlaždice „Jak to vypadá teď“). Datum se na stránce samo změní na „dnes“ / „včera“. */
 export const DODAVKA = {
-  datum: '2026-11-11',
-  cas: 'od 19\u00a0h',
-  pozn: 'dokud se nevypnou čerpadla',
+  datum: '2026-11-12',
+  cas: 'asi 15\u00a0h',
+  pozn: 'ohlášené obnovení dodávky',
 };
 
 /* ---------- Kde stojí cisterny ---------- */
@@ -71,6 +71,7 @@ export const KALENDAR: Den[] = [
   { datum: '2026-11-09', stav: 'vypadek', pozn: 'Podle Stavokompletu je situace stále kritická. Voda poteče jen od 19 h, asi přes hodinu, dokud se čerpadla sama nevypnou. Pravidelné pouštění vody nejde domluvit, některý den voda nepoteče vůbec. Cisterny jsou uzamčené, cisterna od úřadu je přemístěná k čp. 119 u hlavní silnice.' },
   { datum: '2026-11-10', stav: 'vypadek', pozn: 'Voda poteče opět od 19 h, dokud automatický systém nevypne čerpadla, asi přes hodinu. Ani druhé vzorky z přivaděče nevyhověly, další odběr je naplánovaný na pátek 13. 11.' },
   { datum: '2026-11-11', stav: 'vypadek', pozn: 'Voda poteče opět od 19 h, dokud se nevypnou čerpadla. Cisterna od čp. 119 je zpátky před obecním úřadem. Provizorní napojení přivaděče na vodojem je hotové. Druhé vzorky nevyhověly, nadlimitní hodnoty ale klesají. Kontrolní vzorek se odebere v pátek 13. 11.' },
+  { datum: '2026-11-12', stav: 'vypadek', pozn: 'Obce a provozovatel rozhodli: dokud se nespustí přivaděč, bude se vodojem doplňovat vodou z cisteren. Dodávka se má obnovit kolem 15 h. Obec doufá, že další výpadky už nenastanou, a prosí dál šetřit vodou.' },
 ];
 
 /* ---------- Přivaděč z Úval ---------- */
@@ -93,7 +94,7 @@ export const PRIVADEC: { stav: KrokStav; co: string; kdy: string; pozor?: string
 export type OdberStav = 'nevyhovel' | 'ceka' | 'vyhovel' | 'planovano';
 
 /**
- * Odběry vzorků z nového přivaděče podle obcí Hradešín (9. 11., 11. 11.) a Přišimasy (10. 11.). Nový odběr přidej na konec.
+ * Odběry vzorků z nového přivaděče podle obcí Hradešín (9. 11., 11. 11.) a Přišimasy (10. 11., 11. 11.). Nový odběr přidej na konec.
  * pred = popisek spojnice před odběrem (výchozí „znovu“), jen když je krok mezi odběry ověřený.
  */
 export const ODBERY: { datum: string; stav: OdberStav; pred?: string }[] = [
@@ -106,8 +107,12 @@ export const ODBERY: { datum: string; stav: OdberStav; pred?: string }[] = [
 
 export const ZDROJE = [
   {
-    nazev: 'Obec Hradešín – všechny aktuality k vodě (16. 10. – 11. 11.)',
+    nazev: 'Obec Hradešín – všechny aktuality k vodě (16. 10. – 12. 11.)',
     url: 'https://www.hradesin.cz/obecni-urad/aktuality/',
+  },
+  {
+    nazev: 'Obec Hradešín – 12. 11.: vodojem se bude doplňovat z cisteren, dodávka se má obnovit kolem 15 h',
+    url: 'https://www.hradesin.cz/obecni-urad/aktuality/aktuality-situace-s-pitnou-vodou-12112026-83cs.html',
   },
   {
     nazev: 'Obec Hradešín – jednání 11. 11.: napojení na vodojem hotové, druhý vzorek nevyhověl, postup povolení',
@@ -152,6 +157,14 @@ export const ZDROJE = [
   {
     nazev: 'Státní zdravotní ústav – Zásady správné praxe při výstavbě a opravách vodovodní sítě (2014, PDF)',
     url: 'https://szu.gov.cz/wp-content/uploads/2023/02/pece_o_sit.pdf',
+  },
+  {
+    nazev: 'Obec Přišimasy – 12. 11.: vodojem se doplňuje z cisteren, prosba šetřit vodou i v Přišimasech',
+    url: 'https://www.prisimasy.cz/zivot-v-obci/aktuality/prosime-setrete-vodou-1643cs.html',
+  },
+  {
+    nazev: 'Obec Přišimasy – přivaděč 11. 11.: napojení na vodojem hotové, další proplach a dezinfekce, odběr 13. 11.',
+    url: 'https://www.prisimasy.cz/zivot-v-obci/aktuality/aktualne-k-privadeci-vody-1642cs.html',
   },
   {
     nazev: 'Obec Přišimasy – přivaděč 10. 11.: ani druhý vzorek nevyhověl, další odběr 13. 11., dohoda s Úvaly, KHS',
