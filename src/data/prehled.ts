@@ -7,7 +7,7 @@
  * Při aktualizaci přepiš AKTUALIZOVANO a dotčené bloky.
  */
 
-export const AKTUALIZOVANO = '2026-11-11';
+export const AKTUALIZOVANO = '2026-11-12';
 
 /** Poslední ohlášená dodávka (dlaždice „Jak to vypadá teď“). Datum se na stránce samo změní na „dnes“ / „včera“. */
 export const DODAVKA = {
@@ -70,7 +70,7 @@ export const KALENDAR: Den[] = [
   { datum: '2026-11-08', stav: 'vypadek', pozn: 'Ve vrtech dál ubývá vody. Dodávka jen 18–20 h, do vodojemu natéká pomaleji, než se čekalo.' },
   { datum: '2026-11-09', stav: 'vypadek', pozn: 'Podle Stavokompletu je situace stále kritická. Voda poteče jen od 19 h, asi přes hodinu, dokud se čerpadla sama nevypnou. Pravidelné pouštění vody nejde domluvit, některý den voda nepoteče vůbec. Cisterny jsou uzamčené, cisterna od úřadu je přemístěná k čp. 119 u hlavní silnice.' },
   { datum: '2026-11-10', stav: 'vypadek', pozn: 'Voda poteče opět od 19 h, dokud automatický systém nevypne čerpadla, asi přes hodinu. Ani druhé vzorky z přivaděče nevyhověly, další odběr je naplánovaný na pátek 13. 11.' },
-  { datum: '2026-11-11', stav: 'vypadek', pozn: 'Voda poteče opět od 19 h, dokud se nevypnou čerpadla. Cisterna od čp. 119 je zpátky před obecním úřadem. Obec Hradešín potvrzuje, že vzorky z 6. 11. nevyhověly a další se odeberou v pátek 13. 11.' },
+  { datum: '2026-11-11', stav: 'vypadek', pozn: 'Voda poteče opět od 19 h, dokud se nevypnou čerpadla. Cisterna od čp. 119 je zpátky před obecním úřadem. Provizorní napojení přivaděče na vodojem je hotové. Druhé vzorky nevyhověly, nadlimitní hodnoty ale klesají. Kontrolní vzorek se odebere v pátek 13. 11.' },
 ];
 
 /* ---------- Přivaděč z Úval ---------- */
@@ -82,10 +82,10 @@ export const PRIVADEC: { stav: KrokStav; co: string; kdy: string; pozor?: string
   // Každý krok doslova podle zdroje v závorce: P = obec Přišimasy, H = obec Hradešín.
   { stav: 'hotovo', co: 'Propojení u vodojemu Úvaly-jih', kdy: 'dokončeno, technologie oživená (P 3. 11.)' },
   { stav: 'hotovo', co: 'Tlakové zkoušky celé trasy z Úval', kdy: '3. 11., výsledek vyhovující (H 6. 11.)' },
-  { stav: 'probiha', co: 'Rozbor vody', odkaz: '#rozbor', pozor: 'nevyhověly vzorky z 3. 11. ani z 6. 11.', kdy: '11. 11. proplach, odkalení a dezinfekce, další vzorek v pátek 13. 11. (P 10. 11.)' },
-  { stav: 'probiha', co: 'Propojení s vodojemem Hradešín', kdy: 'zhotovitel dodělává dočasné propojovací potrubí (H 6. 11.)' },
-  { stav: 'ceka', co: 'Povolení k předčasnému užívání', kdy: 'žádost půjde na hygienu (KHS) až s vyhovujícím rozborem a kompletními podklady (P 10. 11.)' },
-  { stav: 'ceka', co: 'Voda z Úval poteče do vodojemu', kdy: 'až po povolení, termín zatím nebyl oznámen (H 29. 10.)' },
+  { stav: 'probiha', co: 'Rozbor vody', odkaz: '#rozbor', pozor: 'nevyhověly vzorky z 3. 11. ani z 6. 11.', kdy: 'nadlimitní hodnoty klesají, po novém proplachu kontrolní vzorek v pátek 13. 11. (H 11. 11.)' },
+  { stav: 'hotovo', co: 'Propojení s vodojemem Hradešín', kdy: 'provizorní napojení dokončeno, řeší se už jen řízení nátoku (H 11. 11.)' },
+  { stav: 'ceka', co: 'Povolení k předčasnému užívání', kdy: 'předjednáno: po vyhovujícím rozboru vydá hygiena (KHS) stanovisko obratem a vodoprávní úřad v Českém Brodě zahájí řízení (H 11. 11.)' },
+  { stav: 'ceka', co: 'Voda z Úval poteče do vodojemu', kdy: 'až povolení nabude právní moci; účastníci se vzdají odvolání, aby to bylo co nejdřív. Termín zatím není (H 11. 11.)' },
 ];
 
 /* ---------- Rozbor vody z přivaděče ---------- */
@@ -93,7 +93,7 @@ export const PRIVADEC: { stav: KrokStav; co: string; kdy: string; pozor?: string
 export type OdberStav = 'nevyhovel' | 'ceka' | 'vyhovel' | 'planovano';
 
 /**
- * Odběry vzorků z nového přivaděče podle obcí Hradešín (9. 11.) a Přišimasy (10. 11.). Nový odběr přidej na konec.
+ * Odběry vzorků z nového přivaděče podle obcí Hradešín (9. 11., 11. 11.) a Přišimasy (10. 11.). Nový odběr přidej na konec.
  * pred = popisek spojnice před odběrem (výchozí „znovu“), jen když je krok mezi odběry ověřený.
  */
 export const ODBERY: { datum: string; stav: OdberStav; pred?: string }[] = [
@@ -108,6 +108,10 @@ export const ZDROJE = [
   {
     nazev: 'Obec Hradešín – všechny aktuality k vodě (16. 10. – 11. 11.)',
     url: 'https://www.hradesin.cz/obecni-urad/aktuality/',
+  },
+  {
+    nazev: 'Obec Hradešín – jednání 11. 11.: napojení na vodojem hotové, druhý vzorek nevyhověl, postup povolení',
+    url: 'https://www.hradesin.cz/obecni-urad/aktuality/aktualni-informace-k-situaci-s-pitnou-vodou-11-11-2026-82cs.html',
   },
   {
     nazev: 'Obec Hradešín – 11. 11.: dodávka od 19 h, cisterna zpět před úřadem, další vzorky 13. 11.',
